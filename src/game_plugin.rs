@@ -14,11 +14,11 @@ pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        // Initialize game states
+        // === States ===
         app.add_state::<GameState>()
             .add_state::<PauseState>();
 
-        // Add events for our systems
+        // === Events ===
         app.add_event::<FoodCollisionEvent>()
             .add_event::<WallCollisionEvent>()
             .add_event::<SelfCollisionEvent>()
@@ -28,7 +28,7 @@ impl Plugin for GamePlugin {
             .add_event::<ExplosionEvent>()
             .add_event::<ParticleEvent>();
 
-        // Initialize game resources
+        // === Resources ===
         app.insert_resource(HighScoreResource::default())
             .insert_resource(GameSettings::default())
             .insert_resource(LevelManager::default())
@@ -37,10 +37,10 @@ impl Plugin for GamePlugin {
             .insert_resource(SnakeDirection::Right)
             .insert_resource(ScoreResource::default());
 
-        // Audio system initialization
+        // === Audio Plugin ===
         app.add_plugins(AudioPlugin);
 
-        // Register all our custom components
+        // === Register Components ===
         app.register_type::<Snake>()
             .register_type::<SnakeSegment>()
             .register_type::<Food>()
@@ -53,105 +53,92 @@ impl Plugin for GamePlugin {
             .register_type::<ExplosionEffect>()
             .register_type::<CutsceneElement>();
 
-        // Home Screen Systems
-        app.add_systems(OnEnter(GameState::HomeScreen), 
-            (
+        // === Home Screen ===
+        app.add_systems(OnEnter(GameState::HomeScreen), (
                 setup_home_screen,
                 load_home_screen_assets,
                 start_background_music,
             ).chain())
-            .add_systems(Update, 
-                (
-                    animate_title_snake,
-                    handle_home_screen_input,
-                    update_menu_buttons,
-                ).run_if(in_state(GameState::HomeScreen)));
+            .add_systems(Update, (
+                animate_title_snake,
+                handle_home_screen_input,
+                update_menu_buttons,
+            ).run_if(in_state(GameState::HomeScreen)));
 
-        // Character Selection Systems  
-        app.add_systems(OnEnter(GameState::CharacterSelect),
-            (
+        // === Character Selection ===
+        app.add_systems(OnEnter(GameState::CharacterSelect), (
                 setup_character_selection,
                 load_character_assets,
             ).chain())
-            .add_systems(Update,
-                (
-                    handle_character_selection_input,
-                    update_character_cards,
-                    animate_character_previews,
-                ).run_if(in_state(GameState::CharacterSelect)));
+            .add_systems(Update, (
+                handle_character_selection_input,
+                update_character_cards,
+                animate_character_previews,
+            ).run_if(in_state(GameState::CharacterSelect)));
 
-        // Gameplay Systems
-        app.add_systems(OnEnter(GameState::Playing),
-            (
+        // === Gameplay ===
+        app.add_systems(OnEnter(GameState::Playing), (
                 setup_game_level,
                 spawn_snake,
                 spawn_initial_food,
                 setup_ui_elements,
                 load_level_assets,
             ).chain())
-            .add_systems(Update,
-                (
-                    handle_input,
-                    move_snake,
-                    check_food_collision,
-                    check_wall_collision,
-                    check_self_collision,
-                    grow_snake,
-                    update_score,
-                    update_game_timer,
-                    animate_snake,
-                    update_ui,
-                    handle_pause_input,
-                ).run_if(in_state(GameState::Playing).and_then(in_state(PauseState::Unpaused))));
+            .add_systems(Update, (
+                handle_input,
+                move_snake,
+                check_food_collision,
+                check_wall_collision,
+                check_self_collision,
+                grow_snake,
+                update_score,
+                update_game_timer,
+                animate_snake,
+                update_ui,
+                handle_pause_input,
+            ).run_if(in_state(GameState::Playing).and_then(in_state(PauseState::Unpaused))));
 
-        // Pause Systems
-        app.add_systems(Update,
-                (
-                    handle_pause_input,
-                    display_pause_menu,
-                ).run_if(in_state(GameState::Playing).and_then(in_state(PauseState::Paused))));
+        // === Pause Menu ===
+        app.add_systems(Update, (
+                handle_pause_input,
+                display_pause_menu,
+            ).run_if(in_state(GameState::Playing).and_then(in_state(PauseState::Paused))));
 
-        // Game Over Systems
-        app.add_systems(OnEnter(GameState::GameOver),
-            (
+        // === Game Over ===
+        app.add_systems(OnEnter(GameState::GameOver), (
                 trigger_death_explosion,
                 update_high_score,
                 setup_game_over_screen,
             ).chain())
-            .add_systems(Update,
-                (
-                    animate_explosion_effects,
-                    handle_game_over_input,
-                    update_game_over_ui,
-                ).run_if(in_state(GameState::GameOver)));
+            .add_systems(Update, (
+                animate_explosion_effects,
+                handle_game_over_input,
+                update_game_over_ui,
+            ).run_if(in_state(GameState::GameOver)));
 
-        // Level Complete Systems
-        app.add_systems(OnEnter(GameState::LevelComplete),
-            (
+        // === Level Complete ===
+        app.add_systems(OnEnter(GameState::LevelComplete), (
                 save_level_progress,
                 setup_level_complete_screen,
                 play_victory_sound,
             ).chain())
-            .add_systems(Update,
-                (
-                    handle_level_complete_input,
-                    animate_victory_effects,
-                ).run_if(in_state(GameState::LevelComplete)));
+            .add_systems(Update, (
+                handle_level_complete_input,
+                animate_victory_effects,
+            ).run_if(in_state(GameState::LevelComplete)));
 
-        // Cutscene Systems
-        app.add_systems(OnEnter(GameState::Cutscene),
-            (
+        // === Cutscenes ===
+        app.add_systems(OnEnter(GameState::Cutscene), (
                 setup_cutscene,
                 load_cutscene_assets,
             ).chain())
-            .add_systems(Update,
-                (
-                    update_cutscene,
-                    handle_cutscene_input,
-                    animate_cutscene_elements,
-                ).run_if(in_state(GameState::Cutscene)));
+            .add_systems(Update, (
+                update_cutscene,
+                handle_cutscene_input,
+                animate_cutscene_elements,
+            ).run_if(in_state(GameState::Cutscene)));
 
-        // Level transition and cleanup systems
+        // === Cleanup on Exit ===
         app.add_systems(OnExit(GameState::Playing), (
                 cleanup_game_level,
                 cleanup_food,
@@ -163,37 +150,31 @@ impl Plugin for GamePlugin {
             .add_systems(OnExit(GameState::GameOver), cleanup_game_over)
             .add_systems(OnExit(GameState::Cutscene), cleanup_cutscene);
 
-        // Global systems that run regardless of state
-        app.add_systems(Update,
-            (
+        // === Global Systems (Run Always) ===
+        app.add_systems(Update, (
                 update_audio_system,
                 handle_window_resize,
                 update_animations,
                 save_game_data,
-                // Additional effect systems
                 handle_explosion_events,
                 handle_particle_events,
                 update_particle_effects,
                 update_shockwave_rings,
                 update_delayed_effects,
-                // Food systems
                 spawn_food_system,
                 animate_food,
                 update_food_expiration,
                 update_moving_food,
-                // UI systems
                 update_popup_notifications,
                 update_animated_text,
                 cleanup_pause_menu,
-                // Effect systems
                 update_speed_boost_effects,
                 update_invincibility_effects,
                 handle_collision_responses,
             ));
 
-        // Startup systems
-        app.add_systems(Startup,
-            (
+        // === Startup Systems ===
+        app.add_systems(Startup, (
                 load_global_assets,
                 initialize_audio_system,
                 setup_camera,
@@ -205,26 +186,27 @@ impl Plugin for GamePlugin {
     }
 }
 
-// We'll implement these placeholder functions later
-fn load_home_screen_assets() { /* Implementation needed */ }
-fn load_character_assets() { /* Implementation needed */ }
-fn setup_game_level() { /* Implementation needed */ }
-fn load_level_assets() { /* Implementation needed */ }
-fn update_score() { /* Implementation needed */ }
-fn update_game_timer() { /* Implementation needed */ }
-fn handle_game_over_input() { /* Implementation needed */ }
-fn update_game_over_ui() { /* Implementation needed */ }
-fn update_high_score() { /* Implementation needed */ }
-fn save_level_progress() { /* Implementation needed */ }
-fn play_victory_sound() { /* Implementation needed */ }
-fn handle_level_complete_input() { /* Implementation needed */ }
-fn animate_victory_effects() { /* Implementation needed */ }
-fn setup_cutscene() { /* Implementation needed */ }
-fn load_cutscene_assets() { /* Implementation needed */ }
-fn update_cutscene() { /* Implementation needed */ }
-fn handle_cutscene_input() { /* Implementation needed */ }
-fn animate_cutscene_elements() { /* Implementation needed */ }
-fn cleanup_game_level() { /* Implementation needed */ }
-fn cleanup_cutscene() { /* Implementation needed */ }
-fn update_audio_system() { /* Implementation needed */ }
-fn initialize_audio_system() { /* Implementation needed */ }
+// === Placeholder Implementations ===
+// These allow the file to compile until logic is added.
+fn load_home_screen_assets() { todo!() }
+fn load_character_assets() { todo!() }
+fn setup_game_level() { todo!() }
+fn load_level_assets() { todo!() }
+fn update_score() { todo!() }
+fn update_game_timer() { todo!() }
+fn handle_game_over_input() { todo!() }
+fn update_game_over_ui() { todo!() }
+fn update_high_score() { todo!() }
+fn save_level_progress() { todo!() }
+fn play_victory_sound() { todo!() }
+fn handle_level_complete_input() { todo!() }
+fn animate_victory_effects() { todo!() }
+fn setup_cutscene() { todo!() }
+fn load_cutscene_assets() { todo!() }
+fn update_cutscene() { todo!() }
+fn handle_cutscene_input() { todo!() }
+fn animate_cutscene_elements() { todo!() }
+fn cleanup_game_level() { todo!() }
+fn cleanup_cutscene() { todo!() }
+fn update_audio_system() { todo!() }
+fn initialize_audio_system() { todo!() }
