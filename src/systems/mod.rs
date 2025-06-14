@@ -897,5 +897,22 @@ pub fn update_animations(
     }
 }
 
-// System function implementations will continue in subsequent files
-// Each system type (input, movement, collision, etc.) will get its own file
+// ===============================
+// SYSTEM MODULE IMPORTS
+// ===============================
+
+// Import all our system modules
+pub mod input;
+pub mod snake;
+pub mod collision;
+pub mod food;
+pub mod ui;
+pub mod effects;
+
+// Re-export system functions for easy access
+pub use input::*;
+pub use snake::*;
+pub use collision::*;
+pub use food::*;
+pub use ui::*;
+pub use effects::*;
