@@ -233,7 +233,8 @@ pub enum LevelTheme {
     FinalBoss,
 }
 
-#[derive(Debug, Clone, Reflect)]
+// FIXED: Added Component derive to ParallaxLayer
+#[derive(Component, Debug, Clone, Reflect)]
 pub struct ParallaxLayer {
     pub depth: f32,
     pub scroll_multiplier: f32,
