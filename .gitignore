@@ -1,0 +1,63 @@
+# Rust/Cargo generated files
+/target/
+Cargo.lock
+
+# Bevy hot reloading
+.bevy/
+
+# WebAssembly build artifacts
+/dist/
+/pkg/
+*.wasm
+*.js.map
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# Dependency directories
+node_modules/
+
+# Optional npm cache directory
+.npm
+
+# Game-specific temporary files
+*.tmp
+*.temp
+
+# Build artifacts for web deployment
+wasm-pack.log
+bindgen.log
+
+# VS Code workspace files
+*.code-workspace
+
+# Local environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
