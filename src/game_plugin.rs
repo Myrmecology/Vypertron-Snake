@@ -27,7 +27,15 @@ impl Plugin for GamePlugin {
         app.add_state::<GameState>()
             .add_state::<PauseState>();
 
-        // Initialize game resources
+        // Add events for our systems
+        app.add_event::<crate::systems::FoodCollisionEvent>()
+            .add_event::<crate::systems::WallCollisionEvent>()
+            .add_event::<crate::systems::SelfCollisionEvent>()
+            .add_event::<crate::systems::SpecialCollisionEvent>()
+            .add_event::<crate::systems::SnakeGrowthEvent>()
+            .add_event::<crate::systems::SnakeDeathEvent>()
+            .add_event::<crate::systems::ExplosionEvent>()
+            .add_event::<crate::systems::ParticleEvent>();
         app.insert_resource(HighScoreResource::default())
             .insert_resource(GameSettings::default())
             .insert_resource(LevelManager::default())
@@ -55,71 +63,71 @@ impl Plugin for GamePlugin {
         // Home Screen Systems
         app.add_systems(OnEnter(GameState::HomeScreen), 
             (
-                setup_home_screen,
+                crate::systems::setup_home_screen,
                 load_home_screen_assets,
-                start_background_music,
+                crate::audio::start_background_music,
             ).chain())
             .add_systems(Update, 
                 (
-                    animate_title_snake,
-                    handle_home_screen_input,
-                    update_menu_buttons,
+                    crate::systems::animate_title_snake,
+                    crate::systems::handle_home_screen_input,
+                    crate::systems::update_menu_buttons,
                 ).run_if(in_state(GameState::HomeScreen)));
 
         // Character Selection Systems  
         app.add_systems(OnEnter(GameState::CharacterSelect),
             (
-                setup_character_selection,
+                crate::systems::setup_character_selection,
                 load_character_assets,
             ).chain())
             .add_systems(Update,
                 (
-                    handle_character_selection_input,
-                    update_character_cards,
-                    animate_character_previews,
+                    crate::systems::handle_character_selection_input,
+                    crate::systems::update_character_cards,
+                    crate::systems::animate_character_previews,
                 ).run_if(in_state(GameState::CharacterSelect)));
 
         // Gameplay Systems
         app.add_systems(OnEnter(GameState::Playing),
             (
                 setup_game_level,
-                spawn_snake,
-                spawn_initial_food,
-                setup_ui_elements,
+                crate::systems::spawn_snake,
+                crate::systems::spawn_initial_food,
+                crate::systems::setup_ui_elements,
                 load_level_assets,
             ).chain())
             .add_systems(Update,
                 (
-                    handle_input,
-                    move_snake,
-                    check_food_collision,
-                    check_wall_collision,
-                    check_self_collision,
-                    grow_snake,
+                    crate::systems::handle_input,
+                    crate::systems::move_snake,
+                    crate::systems::check_food_collision,
+                    crate::systems::check_wall_collision,
+                    crate::systems::check_self_collision,
+                    crate::systems::grow_snake,
                     update_score,
                     update_game_timer,
-                    animate_sprites,
-                    update_ui,
-                    handle_pause_input,
+                    crate::systems::animate_snake,
+                    crate::systems::update_ui,
+                    crate::systems::handle_pause_input,
                 ).run_if(in_state(GameState::Playing).and_then(in_state(PauseState::Unpaused))));
 
         // Pause Systems
         app.add_systems(Update,
                 (
-                    handle_pause_input,
-                    display_pause_menu,
+                    crate::systems::handle_pause_input,
+                    crate::systems::display_pause_menu,
                 ).run_if(in_state(GameState::Playing).and_then(in_state(PauseState::Paused))));
 
         // Game Over Systems
         app.add_systems(OnEnter(GameState::GameOver),
             (
-                trigger_death_explosion,
+                crate::systems::trigger_death_explosion,
                 update_high_score,
-                setup_game_over_screen,
+                crate::systems::setup_game_over_screen,
             ).chain())
             .add_systems(Update,
                 (
-                    animate_explosion_effects,
+                    crate::systems::animate_explosion_effects,
                     handle_game_over_input,
                     update_game_over_ui,
                 ).run_if(in_state(GameState::GameOver)));
@@ -128,7 +136,7 @@ impl Plugin for GamePlugin {
         app.add_systems(OnEnter(GameState::LevelComplete),
             (
                 save_level_progress,
-                setup_level_complete_screen,
+                crate::systems::setup_level_complete_screen,
                 play_victory_sound,
             ).chain())
             .add_systems(Update,
@@ -151,28 +159,55 @@ impl Plugin for GamePlugin {
                 ).run_if(in_state(GameState::Cutscene)));
 
         // Level transition and cleanup systems
-        app.add_systems(OnExit(GameState::Playing), cleanup_game_level)
-            .add_systems(OnExit(GameState::HomeScreen), cleanup_home_screen)
-            .add_systems(OnExit(GameState::CharacterSelect), cleanup_character_selection)
-            .add_systems(OnExit(GameState::GameOver), cleanup_game_over)
+        app.add_systems(OnExit(GameState::Playing), (
+                cleanup_game_level,
+                crate::systems::cleanup_food,
+                crate::systems::cleanup_effects,
+                crate::systems::cleanup_ui_elements,
+            ))
+            .add_systems(OnExit(GameState::HomeScreen), crate::systems::cleanup_home_screen)
+            .add_systems(OnExit(GameState::CharacterSelect), crate::systems::cleanup_character_selection)
+            .add_systems(OnExit(GameState::GameOver), crate::systems::cleanup_game_over)
             .add_systems(OnExit(GameState::Cutscene), cleanup_cutscene);
 
         // Global systems that run regardless of state
         app.add_systems(Update,
             (
                 update_audio_system,
-                handle_window_resize,
-                update_animations,
-                save_game_data,
+                crate::systems::handle_window_resize,
+                crate::systems::update_animations,
+                crate::systems::save_game_data,
+                // Additional effect systems
+                crate::systems::handle_explosion_events,
+                crate::systems::handle_particle_events,
+                crate::systems::update_particle_effects,
+                crate::systems::update_shockwave_rings,
+                crate::systems::update_delayed_effects,
+                // Food systems
+                crate::systems::spawn_food_system,
+                crate::systems::animate_food,
+                crate::systems::update_food_expiration,
+                crate::systems::update_moving_food,
+                // UI systems
+                crate::systems::update_popup_notifications,
+                crate::systems::update_animated_text,
+                crate::systems::cleanup_pause_menu,
+                // Effect systems
+                crate::systems::update_speed_boost_effects,
+                crate::systems::update_invincibility_effects,
+                crate::systems::handle_collision_responses,
             ));
 
         // Startup systems
         app.add_systems(Startup,
             (
-                load_global_assets,
+                crate::systems::load_global_assets,
                 initialize_audio_system,
-                setup_camera,
-                load_saved_data,
+                crate::systems::setup_camera,
+                crate::systems::load_saved_data,
+                crate::systems::initialize_food_system,
+                crate::systems::initialize_effects_system,
+                crate::systems::initialize_input_system,
             ).chain());
     }
 }
