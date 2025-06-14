@@ -46,11 +46,6 @@ codegen-units = 1
 [profile.dev]
 opt-level = 1
 
-# Web-specific configuration
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-console_error_panic_hook = "0.1"
-wee_alloc = "0.4"
-
 [[bin]]
 name = "vypertron-snake"
 path = "src/main.rs"
