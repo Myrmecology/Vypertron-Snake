@@ -60,18 +60,18 @@ pub mod web {
 
     use console_error_panic_hook;
 
-    /// Initialize web-specific features
+    #[allow(unused)]
     pub fn init() {
         console_error_panic_hook::set_once();
     }
 
-    /// Get high scores from browser local storage
+    #[allow(unused)]
     pub fn get_stored_high_scores() -> Vec<u32> {
         // TODO: Implement using gloo-storage crate
         vec![]
     }
 
-    /// Save high scores to browser local storage
+    #[allow(unused)]
     pub fn save_high_scores(_scores: Vec<u32>) {
         // TODO: Implement using gloo-storage crate
     }
@@ -83,14 +83,14 @@ pub mod desktop {
 
     use std::path::PathBuf;
 
-    /// Get the save directory for game data
+    #[allow(unused)]
     pub fn get_save_directory() -> PathBuf {
         dirs::data_dir()
             .unwrap_or_else(|| std::env::current_dir().unwrap())
             .join("vypertron-snake")
     }
 
-    /// Initialize desktop-specific features
+    #[allow(unused)]
     pub fn init() {
         let save_dir = get_save_directory();
         if !save_dir.exists() {
@@ -98,3 +98,4 @@ pub mod desktop {
         }
     }
 }
+

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-// Import all our custom modules
+// Custom modules
 use crate::states::*;
 use crate::systems::*;
 use crate::components::*;
@@ -40,7 +40,7 @@ impl Plugin for GamePlugin {
         // === Audio Plugin ===
         app.add_plugins(AudioPlugin);
 
-        // === Register Components ===
+        // === Register Components for Reflect/Editor use ===
         app.register_type::<Snake>()
             .register_type::<SnakeSegment>()
             .register_type::<Food>()
@@ -65,7 +65,7 @@ impl Plugin for GamePlugin {
                 update_menu_buttons,
             ).run_if(in_state(GameState::HomeScreen)));
 
-        // === Character Selection ===
+        // === Character Select ===
         app.add_systems(OnEnter(GameState::CharacterSelect), (
                 setup_character_selection,
                 load_character_assets,
@@ -96,13 +96,19 @@ impl Plugin for GamePlugin {
                 animate_snake,
                 update_ui,
                 handle_pause_input,
-            ).run_if(in_state(GameState::Playing).and_then(in_state(PauseState::Unpaused))));
+            ).run_if(
+                in_state(GameState::Playing)
+                .and_then(in_state(PauseState::Unpaused))
+            ));
 
-        // === Pause Menu ===
+        // === Pause ===
         app.add_systems(Update, (
                 handle_pause_input,
                 display_pause_menu,
-            ).run_if(in_state(GameState::Playing).and_then(in_state(PauseState::Paused))));
+            ).run_if(
+                in_state(GameState::Playing)
+                .and_then(in_state(PauseState::Paused))
+            ));
 
         // === Game Over ===
         app.add_systems(OnEnter(GameState::GameOver), (
@@ -138,7 +144,7 @@ impl Plugin for GamePlugin {
                 animate_cutscene_elements,
             ).run_if(in_state(GameState::Cutscene)));
 
-        // === Cleanup on Exit ===
+        // === Cleanup ===
         app.add_systems(OnExit(GameState::Playing), (
                 cleanup_game_level,
                 cleanup_food,
@@ -150,7 +156,7 @@ impl Plugin for GamePlugin {
             .add_systems(OnExit(GameState::GameOver), cleanup_game_over)
             .add_systems(OnExit(GameState::Cutscene), cleanup_cutscene);
 
-        // === Global Systems (Run Always) ===
+        // === Global Systems ===
         app.add_systems(Update, (
                 update_audio_system,
                 handle_window_resize,
@@ -173,7 +179,7 @@ impl Plugin for GamePlugin {
                 handle_collision_responses,
             ));
 
-        // === Startup Systems ===
+        // === Startup ===
         app.add_systems(Startup, (
                 load_global_assets,
                 initialize_audio_system,
@@ -186,27 +192,28 @@ impl Plugin for GamePlugin {
     }
 }
 
-// === Placeholder Implementations ===
-// These allow the file to compile until logic is added.
-fn load_home_screen_assets() { todo!() }
-fn load_character_assets() { todo!() }
-fn setup_game_level() { todo!() }
-fn load_level_assets() { todo!() }
-fn update_score() { todo!() }
-fn update_game_timer() { todo!() }
-fn handle_game_over_input() { todo!() }
-fn update_game_over_ui() { todo!() }
-fn update_high_score() { todo!() }
-fn save_level_progress() { todo!() }
-fn play_victory_sound() { todo!() }
-fn handle_level_complete_input() { todo!() }
-fn animate_victory_effects() { todo!() }
-fn setup_cutscene() { todo!() }
-fn load_cutscene_assets() { todo!() }
-fn update_cutscene() { todo!() }
-fn handle_cutscene_input() { todo!() }
-fn animate_cutscene_elements() { todo!() }
-fn cleanup_game_level() { todo!() }
-fn cleanup_cutscene() { todo!() }
-fn update_audio_system() { todo!() }
-fn initialize_audio_system() { todo!() }
+// === Placeholder Stubs ===
+// These should match Bevy signatures so they compile cleanly
+
+fn load_home_screen_assets() {}
+fn load_character_assets() {}
+fn setup_game_level() {}
+fn load_level_assets() {}
+fn update_score() {}
+fn update_game_timer() {}
+fn handle_game_over_input() {}
+fn update_game_over_ui() {}
+fn update_high_score() {}
+fn save_level_progress() {}
+fn play_victory_sound() {}
+fn handle_level_complete_input() {}
+fn animate_victory_effects() {}
+fn setup_cutscene() {}
+fn load_cutscene_assets() {}
+fn update_cutscene() {}
+fn handle_cutscene_input() {}
+fn animate_cutscene_elements() {}
+fn cleanup_game_level() {}
+fn cleanup_cutscene() {}
+fn update_audio_system() {}
+fn initialize_audio_system() {}
