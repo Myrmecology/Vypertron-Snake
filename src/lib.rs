@@ -64,55 +64,17 @@ pub use bevy::prelude::*;
 // Main game plugin module
 pub mod game_plugin;
 
+// Core game modules
+pub mod states;
+pub mod systems;
+pub mod components;
+pub mod resources;
+pub mod levels;
+pub mod audio;
+pub mod utils;
+
 // Re-export the main GamePlugin for easy access
 pub use game_plugin::GamePlugin;
-
-// Re-export all public types from our game plugin
-pub use game_plugin::{
-    GameState,
-    PauseState,
-    SnakeDirection,
-    GameTimer,
-    ScoreResource,
-};
-
-// Module declarations for all our game systems
-// These will be implemented in subsequent files
-
-/// Game state management and transitions
-pub mod states {
-    pub use crate::game_plugin::states::*;
-}
-
-/// Core game systems (movement, collision, input, etc.)
-pub mod systems {
-    pub use crate::game_plugin::systems::*;
-}
-
-/// ECS components for game entities
-pub mod components {
-    pub use crate::game_plugin::components::*;
-}
-
-/// Global game resources and data
-pub mod resources {
-    pub use crate::game_plugin::resources::*;
-}
-
-/// Level definitions and progression
-pub mod levels {
-    pub use crate::game_plugin::levels::*;
-}
-
-/// Audio system for music and sound effects
-pub mod audio {
-    pub use crate::game_plugin::audio::*;
-}
-
-/// Utility functions and helpers
-pub mod utils {
-    pub use crate::game_plugin::utils::*;
-}
 
 // Crate-level constants
 /// Game version
@@ -151,10 +113,6 @@ pub mod web {
     pub fn init() {
         // Set up console panic hook for better error reporting
         console_error_panic_hook::set_once();
-        
-        // Initialize wee_alloc as global allocator for smaller WASM size
-        #[global_allocator]
-        static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
     }
     
     /// Get high scores from browser local storage
