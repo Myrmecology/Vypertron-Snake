@@ -10,6 +10,7 @@
 use bevy::prelude::*;
 use crate::components::*;
 use crate::resources::*;
+use crate::states::StateTransitionEvent; // Import our custom StateTransitionEvent
 use crate::states::*;
 use crate::utils::*;
 use crate::audio::*;
@@ -43,10 +44,12 @@ pub fn spawn_snake(
     // Create snake material with character color
     let snake_color = ColorUtils::get_character_color(character.id);
     let snake_material = materials.add(ColorMaterial::from(snake_color));
-    let segment_mesh = meshes.add(Mesh::from(shape::Quad::new(Vec2::new(
+    
+    // FIXED: Updated shape creation for Bevy 0.14
+    let segment_mesh = meshes.add(Rectangle::new(
         crate::GRID_SIZE * 0.9, // Slightly smaller than grid for visual separation
         crate::GRID_SIZE * 0.9,
-    ))));
+    ));
     
     // Spawn snake head
     let snake_entity = commands.spawn((
@@ -248,19 +251,20 @@ fn collect_segment_positions(
         &mut SmoothMovement
     ), (With<SnakeSegment>, Without<Snake>)>
 ) -> Vec<Vec2> {
-    let mut positions = Vec::new();
+    let mut positions_with_indices = Vec::new();
     
     for (segment, _, grid_pos, _) in segment_query.iter() {
-        positions.push(Vec2::new(grid_pos.x as f32, grid_pos.y as f32));
+        positions_with_indices.push((
+            segment.segment_index,
+            Vec2::new(grid_pos.x as f32, grid_pos.y as f32)
+        ));
     }
     
-    // Sort by segment index to maintain order
-    positions.sort_by(|a, b| {
-        // This would need access to segment indices - simplified for now
-        a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal)
-    });
+    // FIXED: Sort by segment index instead of trying to compare Vec2 positions
+    positions_with_indices.sort_by_key(|(index, _)| *index);
     
-    positions
+    // Extract just the positions
+    positions_with_indices.into_iter().map(|(_, pos)| pos).collect()
 }
 
 /// Update snake body segments to follow the head
@@ -350,17 +354,17 @@ fn handle_teleporter_wrapping(
 
 /// Update smooth movement visual interpolation
 fn update_smooth_movement_progress(
-    time: &Time,
-    transform: &mut Transform,
+    _time: &Time, // FIXED: Added underscore prefix for unused parameter
+    _transform: &mut Transform, // FIXED: Added underscore prefix for unused parameter
     move_timer: f32,
     move_interval: f32,
 ) {
     // Calculate smooth interpolation progress
     let progress = (move_timer / move_interval).min(1.0);
-    let eased_progress = AnimationUtils::apply_easing(progress, &EasingType::EaseOut);
+    let _eased_progress = AnimationUtils::apply_easing(progress, &EasingType::EaseOut); // FIXED: Added underscore prefix
     
     // Apply subtle anticipation and follow-through
-    let anticipation = if progress < 0.3 {
+    let _anticipation = if progress < 0.3 { // FIXED: Added underscore prefix
         (progress / 0.3) * 0.1 // Slight pull-back
     } else {
         0.1 + ((progress - 0.3) / 0.7) * 0.9 // Forward movement
@@ -455,10 +459,12 @@ fn spawn_new_segment(
 ) {
     let character_color = ColorUtils::get_character_color(character_id);
     let segment_material = materials.add(ColorMaterial::from(character_color));
-    let segment_mesh = meshes.add(Mesh::from(shape::Quad::new(Vec2::new(
+    
+    // FIXED: Updated shape creation for Bevy 0.14
+    let segment_mesh = meshes.add(Rectangle::new(
         crate::GRID_SIZE * 0.9,
         crate::GRID_SIZE * 0.9,
-    ))));
+    ));
     
     commands.spawn((
         MaterialMesh2dBundle {
@@ -506,7 +512,7 @@ pub fn animate_snake(
     time: Res<Time>,
     mut snake_query: Query<&mut Transform, With<Snake>>,
     mut segment_query: Query<(&mut Transform, &mut SnakeSegment), (With<SnakeSegment>, Without<Snake>)>,
-    level_manager: Res<LevelManager>,
+    _level_manager: Res<LevelManager>, // FIXED: Added underscore prefix for unused parameter
 ) {
     // Animate snake head
     for mut transform in snake_query.iter_mut() {
@@ -592,13 +598,19 @@ pub fn update_snake_trail(
             if snake.is_alive {
                 // Create fading trail particle
                 let trail_color = ColorUtils::get_character_color(snake.character_id);
+                
+                // FIXED: Use Color components correctly for Bevy 0.14
+                // Convert color to linear RGB components 
+                let linear_color = trail_color.to_linear();
                 let trail_material = materials.add(ColorMaterial::from(
-                    Color::rgba(trail_color.r(), trail_color.g(), trail_color.b(), 0.3)
+                    Color::srgba(linear_color.red, linear_color.green, linear_color.blue, 0.3)
                 ));
-                let trail_mesh = meshes.add(Mesh::from(shape::Quad::new(Vec2::new(
+                
+                // FIXED: Updated shape creation for Bevy 0.14
+                let trail_mesh = meshes.add(Rectangle::new(
                     crate::GRID_SIZE * 0.5,
                     crate::GRID_SIZE * 0.5,
-                ))));
+                ));
                 
                 commands.spawn((
                     MaterialMesh2dBundle {
@@ -615,8 +627,8 @@ pub fn update_snake_trail(
                         velocity: Vec2::ZERO,
                         lifetime: 2.0,
                         age: 0.0,
-                        start_color: Color::rgba(trail_color.r(), trail_color.g(), trail_color.b(), 0.3),
-                        end_color: Color::rgba(trail_color.r(), trail_color.g(), trail_color.b(), 0.0),
+                        start_color: Color::srgba(linear_color.red, linear_color.green, linear_color.blue, 0.3), // FIXED: Color::rgba -> Color::srgba
+                        end_color: Color::srgba(linear_color.red, linear_color.green, linear_color.blue, 0.0), // FIXED: Color::rgba -> Color::srgba
                         start_scale: 0.5,
                         end_scale: 0.1,
                     },
