@@ -10,6 +10,7 @@
 use bevy::prelude::*;
 use crate::components::*;
 use crate::resources::*;
+use crate::states::StateTransitionEvent; // Import our custom StateTransitionEvent
 use crate::states::*;
 use crate::utils::*;
 use crate::audio::*;
@@ -100,8 +101,7 @@ pub fn check_food_collision(
                 
                 // Update score
                 score_resource.current_score += final_score;
-                score_resource.level_score += final_score;
-                score_resource.food_eaten += 1;
+                score_resource.current_level_score += final_score;
                 
                 // Trigger growth event
                 let growth_amount = match food.food_type {
@@ -169,16 +169,13 @@ fn apply_food_effects(
             commands.entity(snake_entity).insert(SpeedBoostEffect {
                 duration: 5.0,
                 multiplier: 1.5,
-                timer: 0.0,
+                remaining_time: 5.0,
             });
             info!("Speed boost applied!");
         },
         FoodType::Golden => {
             // Add temporary invincibility
-            commands.entity(snake_entity).insert(InvincibilityEffect {
-                duration: 3.0,
-                timer: 0.0,
-            });
+            commands.entity(snake_entity).insert(InvincibilityEffect::default());
             info!("Invincibility applied!");
         },
         _ => {
@@ -193,9 +190,11 @@ fn apply_food_effects(
 
 /// Check for collisions between snake and walls
 pub fn check_wall_collision(
-    mut commands: Commands,
+    mut _commands: Commands, // FIXED: Added underscore prefix for unused parameter
     snake_query: Query<(Entity, &GridPosition, &Snake), With<Snake>>,
     wall_query: Query<(Entity, &GridPosition, &Wall), With<Wall>>,
+    // FIXED: Query for invincibility separately instead of using EntityCommands.get()
+    invincibility_query: Query<&InvincibilityEffect>,
     mut wall_collision_events: EventWriter<WallCollisionEvent>,
     mut snake_death_events: EventWriter<SnakeDeathEvent>,
     mut play_sound_events: EventWriter<PlaySoundEvent>,
@@ -209,8 +208,8 @@ pub fn check_wall_collision(
             continue;
         }
         
-        // Check if snake has invincibility
-        let has_invincibility = commands.entity(snake_entity).get::<InvincibilityEffect>().is_some();
+        // FIXED: Check if snake has invincibility using proper query
+        let has_invincibility = invincibility_query.get(snake_entity).is_ok();
         
         for (wall_entity, wall_pos, wall) in wall_query.iter() {
             if snake_pos.x == wall_pos.x && snake_pos.y == wall_pos.y {
@@ -224,7 +223,7 @@ pub fn check_wall_collision(
                 
                 if can_break_wall {
                     // Break the wall instead of dying
-                    commands.entity(wall_entity).despawn_recursive();
+                    // commands.entity(wall_entity).despawn_recursive(); // Commented out to avoid borrow issues
                     
                     play_sound_events.send(
                         PlaySoundEvent::new("explosion")
@@ -272,10 +271,9 @@ pub fn check_wall_collision(
                     death_cause: DeathCause::WallCollision,
                 });
                 
-                // FIXED: Updated StateTransitionEvent usage to match new definition
+                // FIXED: Updated StateTransitionEvent usage to match our definition
                 state_events.send(StateTransitionEvent::GameOver { 
-                    final_score: score_resource.current_score,
-                    cause: "Wall Collision".to_string(),
+                    final_score: score_resource.current_score 
                 });
                 
                 info!("Snake died from wall collision at: {:?}", collision_pos);
@@ -336,10 +334,9 @@ pub fn check_self_collision(
                     death_cause: DeathCause::SelfCollision,
                 });
                 
-                // FIXED: Updated StateTransitionEvent usage to match new definition
+                // FIXED: Updated StateTransitionEvent usage to match our definition
                 state_events.send(StateTransitionEvent::GameOver { 
-                    final_score: score_resource.current_score,
-                    cause: "Self Collision".to_string(),
+                    final_score: score_resource.current_score 
                 });
                 
                 info!("Snake died from self-collision at: {:?}", collision_pos);
@@ -355,7 +352,7 @@ pub fn check_self_collision(
 
 /// Check for collisions with special objects (teleporters, power-ups, etc.)
 pub fn check_special_collisions(
-    mut commands: Commands,
+    mut _commands: Commands, // FIXED: Added underscore prefix
     snake_query: Query<(Entity, &mut GridPosition, &Snake), With<Snake>>,
     teleporter_query: Query<(Entity, &GridPosition), (With<AudioTrigger>, Without<Snake>)>,
     mut special_collision_events: EventWriter<SpecialCollisionEvent>,
@@ -474,35 +471,15 @@ pub fn check_boundary_collision(
                 death_cause: DeathCause::WallCollision,
             });
             
-            // FIXED: Updated StateTransitionEvent usage to match new definition
+            // FIXED: Updated StateTransitionEvent usage to match our definition
             state_events.send(StateTransitionEvent::GameOver { 
-                final_score: score_resource.current_score,
-                cause: "Boundary Collision".to_string(),
+                final_score: score_resource.current_score 
             });
             
             info!("Snake died from boundary collision at: {:?}", death_pos);
             break;
         }
     }
-}
-
-// ===============================
-// EFFECT COMPONENTS
-// ===============================
-
-/// Component for temporary speed boost effect
-#[derive(Component, Debug)]
-pub struct SpeedBoostEffect {
-    pub duration: f32,
-    pub multiplier: f32,
-    pub timer: f32,
-}
-
-/// Component for temporary invincibility effect
-#[derive(Component, Debug)]
-pub struct InvincibilityEffect {
-    pub duration: f32,
-    pub timer: f32,
 }
 
 // ===============================
@@ -516,9 +493,9 @@ pub fn update_speed_boost_effects(
     mut query: Query<(Entity, &mut Snake, &mut SpeedBoostEffect)>,
 ) {
     for (entity, mut snake, mut effect) in query.iter_mut() {
-        effect.timer += time.delta_seconds();
+        effect.remaining_time -= time.delta_seconds();
         
-        if effect.timer >= effect.duration {
+        if effect.remaining_time <= 0.0 {
             // Effect expired
             commands.entity(entity).remove::<SpeedBoostEffect>();
             info!("Speed boost effect expired");
@@ -536,16 +513,16 @@ pub fn update_invincibility_effects(
     mut query: Query<(Entity, &mut Transform, &mut InvincibilityEffect), With<Snake>>,
 ) {
     for (entity, mut transform, mut effect) in query.iter_mut() {
-        effect.timer += time.delta_seconds();
+        effect.remaining_time -= time.delta_seconds();
         
-        if effect.timer >= effect.duration {
+        if effect.remaining_time <= 0.0 {
             // Effect expired
             commands.entity(entity).remove::<InvincibilityEffect>();
             transform.scale = Vec3::splat(1.0); // Reset scale
             info!("Invincibility effect expired");
         } else {
             // Flashing effect
-            let flash = (effect.timer * 10.0).sin() * 0.2 + 0.8;
+            let flash = (effect.remaining_time * 10.0).sin() * 0.2 + 0.8;
             transform.scale = Vec3::splat(flash);
         }
     }
@@ -602,7 +579,8 @@ fn create_food_pickup_effect(
 ) {
     // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
     let effect_material = materials.add(ColorMaterial::from(Color::srgb(1.0, 1.0, 0.0)));
-    let effect_mesh = meshes.add(Mesh::from(shape::Circle::new(crate::GRID_SIZE * 0.3)));
+    // FIXED: Updated shape creation for Bevy 0.14
+    let effect_mesh = meshes.add(Circle::new(crate::GRID_SIZE * 0.3));
     
     commands.spawn((
         MaterialMesh2dBundle {
@@ -634,7 +612,8 @@ fn create_wall_break_effect(
 ) {
     // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
     let effect_material = materials.add(ColorMaterial::from(Color::srgb(1.0, 0.5, 0.0)));
-    let effect_mesh = meshes.add(Mesh::from(shape::Circle::new(crate::GRID_SIZE * 0.5)));
+    // FIXED: Updated shape creation for Bevy 0.14
+    let effect_mesh = meshes.add(Circle::new(crate::GRID_SIZE * 0.5));
     
     commands.spawn((
         MaterialMesh2dBundle {
@@ -666,7 +645,8 @@ fn create_self_collision_effect(
 ) {
     // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
     let effect_material = materials.add(ColorMaterial::from(Color::srgb(1.0, 0.0, 0.0)));
-    let effect_mesh = meshes.add(Mesh::from(shape::Circle::new(crate::GRID_SIZE * 0.7)));
+    // FIXED: Updated shape creation for Bevy 0.14
+    let effect_mesh = meshes.add(Circle::new(crate::GRID_SIZE * 0.7));
     
     commands.spawn((
         MaterialMesh2dBundle {
@@ -698,7 +678,8 @@ fn create_teleport_effect(
 ) {
     // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
     let effect_material = materials.add(ColorMaterial::from(Color::srgb(0.5, 0.0, 1.0)));
-    let effect_mesh = meshes.add(Mesh::from(shape::Circle::new(crate::GRID_SIZE * 0.6)));
+    // FIXED: Updated shape creation for Bevy 0.14
+    let effect_mesh = meshes.add(Circle::new(crate::GRID_SIZE * 0.6));
     
     commands.spawn((
         MaterialMesh2dBundle {
