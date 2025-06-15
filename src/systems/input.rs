@@ -10,6 +10,7 @@
 use bevy::prelude::*;
 use crate::components::*;
 use crate::resources::*;
+use crate::states::StateTransitionEvent; // Import our custom StateTransitionEvent specifically
 use crate::states::*;
 use crate::utils::*;
 use crate::audio::*;
@@ -72,8 +73,8 @@ pub struct InputValidation {
 pub fn handle_input(
     game_state: Res<State<GameState>>,
     pause_state: Res<State<PauseState>>,
-    keyboard_input: Res<Input<KeyCode>>,
-    mouse_input: Res<Input<MouseButton>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>, // FIXED: Input<KeyCode> -> ButtonInput<KeyCode>
+    mouse_input: Res<ButtonInput<MouseButton>>, // FIXED: Input<MouseButton> -> ButtonInput<MouseButton>
     time: Res<Time>,
     mut input_buffer: ResMut<InputBuffer>,
     mut input_validation: ResMut<InputValidation>,
@@ -173,7 +174,7 @@ pub fn handle_input(
 
 /// Handle global inputs that work in any state
 fn handle_global_input(
-    keyboard_input: &Res<Input<KeyCode>>,
+    keyboard_input: &Res<ButtonInput<KeyCode>>, // FIXED: Input<KeyCode> -> ButtonInput<KeyCode>
     game_state: &Res<State<GameState>>,
     pause_state: &Res<State<PauseState>>,
     game_settings: &Res<GameSettings>,
@@ -227,7 +228,7 @@ fn handle_global_input(
 
 /// Handle gameplay input (snake movement)
 fn handle_gameplay_input(
-    keyboard_input: &Res<Input<KeyCode>>,
+    keyboard_input: &Res<ButtonInput<KeyCode>>, // FIXED
     time: &Res<Time>,
     input_buffer: &mut ResMut<InputBuffer>,
     input_validation: &mut ResMut<InputValidation>,
@@ -321,7 +322,7 @@ fn update_input_buffer(time: &Res<Time>, input_buffer: &mut ResMut<InputBuffer>)
 
 /// Handle pause menu input
 fn handle_pause_menu_input(
-    keyboard_input: &Res<Input<KeyCode>>,
+    keyboard_input: &Res<ButtonInput<KeyCode>>, // FIXED
     game_settings: &Res<GameSettings>,
     state_events: &mut EventWriter<StateTransitionEvent>,
     play_sound_events: &mut EventWriter<PlaySoundEvent>,
@@ -334,13 +335,13 @@ fn handle_pause_menu_input(
     }
     
     // Restart level with R
-    if keyboard_input.just_pressed(KeyCode::R) {
+    if keyboard_input.just_pressed(KeyCode::KeyR) { // FIXED: R -> KeyR
         play_sound_events.send(PlaySoundEvent::new("menu_select"));
         state_events.send(StateTransitionEvent::RestartLevel);
     }
     
     // Quit to menu with Q
-    if keyboard_input.just_pressed(KeyCode::Q) {
+    if keyboard_input.just_pressed(KeyCode::KeyQ) { // FIXED: Q -> KeyQ
         play_sound_events.send(PlaySoundEvent::new("menu_navigate"));
         state_events.send(StateTransitionEvent::QuitToMenu);
     }
@@ -348,7 +349,7 @@ fn handle_pause_menu_input(
 
 /// Handle game over screen input
 fn handle_game_over_input(
-    keyboard_input: &Res<Input<KeyCode>>,
+    keyboard_input: &Res<ButtonInput<KeyCode>>, // FIXED
     game_settings: &Res<GameSettings>,
     state_events: &mut EventWriter<StateTransitionEvent>,
     play_sound_events: &mut EventWriter<PlaySoundEvent>,
@@ -367,7 +368,7 @@ fn handle_game_over_input(
     }
     
     // Show statistics with S
-    if keyboard_input.just_pressed(KeyCode::S) {
+    if keyboard_input.just_pressed(KeyCode::KeyS) { // FIXED: S -> KeyS
         play_sound_events.send(PlaySoundEvent::new("menu_navigate"));
         // Could trigger statistics display
         info!("Show statistics requested");
@@ -376,7 +377,7 @@ fn handle_game_over_input(
 
 /// Handle level complete screen input
 fn handle_level_complete_input(
-    keyboard_input: &Res<Input<KeyCode>>,
+    keyboard_input: &Res<ButtonInput<KeyCode>>, // FIXED
     game_settings: &Res<GameSettings>,
     state_events: &mut EventWriter<StateTransitionEvent>,
     play_sound_events: &mut EventWriter<PlaySoundEvent>,
@@ -391,7 +392,7 @@ fn handle_level_complete_input(
     }
     
     // Replay level with R
-    if keyboard_input.just_pressed(KeyCode::R) {
+    if keyboard_input.just_pressed(KeyCode::KeyR) { // FIXED: R -> KeyR
         play_sound_events.send(PlaySoundEvent::new("menu_select"));
         state_events.send(StateTransitionEvent::RestartLevel);
     }
@@ -405,7 +406,7 @@ fn handle_level_complete_input(
 
 /// Handle cutscene input
 fn handle_cutscene_input(
-    keyboard_input: &Res<Input<KeyCode>>,
+    keyboard_input: &Res<ButtonInput<KeyCode>>, // FIXED
     game_settings: &Res<GameSettings>,
     state_events: &mut EventWriter<StateTransitionEvent>,
     play_sound_events: &mut EventWriter<PlaySoundEvent>,
@@ -426,7 +427,7 @@ fn handle_cutscene_input(
 
 /// Handle settings menu input
 fn handle_settings_input(
-    keyboard_input: &Res<Input<KeyCode>>,
+    keyboard_input: &Res<ButtonInput<KeyCode>>, // FIXED
     game_settings: &Res<GameSettings>,
     state_events: &mut EventWriter<StateTransitionEvent>,
     play_sound_events: &mut EventWriter<PlaySoundEvent>,
@@ -450,7 +451,7 @@ fn handle_settings_input(
 
 /// Handle credits screen input
 fn handle_credits_input(
-    keyboard_input: &Res<Input<KeyCode>>,
+    keyboard_input: &Res<ButtonInput<KeyCode>>, // FIXED
     game_settings: &Res<GameSettings>,
     state_events: &mut EventWriter<StateTransitionEvent>,
     play_sound_events: &mut EventWriter<PlaySoundEvent>,
@@ -498,7 +499,7 @@ pub fn consume_buffered_input(
 
 /// System to handle pause input specifically
 pub fn handle_pause_input(
-    keyboard_input: Res<Input<KeyCode>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>, // FIXED
     game_state: Res<State<GameState>>,
     pause_state: Res<State<PauseState>>,
     game_settings: Res<GameSettings>,
@@ -532,7 +533,7 @@ pub fn handle_pause_input(
 
 /// System to provide visual feedback for input
 pub fn input_visual_feedback(
-    keyboard_input: Res<Input<KeyCode>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>, // FIXED
     game_settings: Res<GameSettings>,
     mut snake_query: Query<&mut Transform, With<Snake>>,
     time: Res<Time>,
@@ -554,7 +555,7 @@ pub fn input_visual_feedback(
 
 /// System to provide haptic feedback (if supported)
 pub fn input_haptic_feedback(
-    keyboard_input: Res<Input<KeyCode>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>, // FIXED
     game_settings: Res<GameSettings>,
     // Note: Bevy doesn't have built-in haptic support yet
     // This is a placeholder for future haptic feedback
@@ -572,12 +573,12 @@ pub fn input_haptic_feedback(
 
 /// System to handle accessibility input features
 pub fn accessibility_input(
-    keyboard_input: Res<Input<KeyCode>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>, // FIXED
     game_settings: Res<GameSettings>,
     mut play_sound_events: EventWriter<PlaySoundEvent>,
 ) {
     // High contrast toggle
-    if keyboard_input.just_pressed(KeyCode::H) && 
+    if keyboard_input.just_pressed(KeyCode::KeyH) && // FIXED: H -> KeyH
        keyboard_input.pressed(KeyCode::ControlLeft) {
         if game_settings.accessibility.high_contrast {
             info!("High contrast mode disabled");
@@ -588,7 +589,7 @@ pub fn accessibility_input(
     }
     
     // Audio cues toggle
-    if keyboard_input.just_pressed(KeyCode::A) && 
+    if keyboard_input.just_pressed(KeyCode::KeyA) && // FIXED: A -> KeyA
        keyboard_input.pressed(KeyCode::ControlLeft) {
         if game_settings.accessibility.audio_cues {
             info!("Audio cues disabled");
@@ -599,7 +600,7 @@ pub fn accessibility_input(
     }
     
     // Reduced motion toggle
-    if keyboard_input.just_pressed(KeyCode::M) && 
+    if keyboard_input.just_pressed(KeyCode::KeyM) && // FIXED: M -> KeyM
        keyboard_input.pressed(KeyCode::ControlLeft) {
         if game_settings.accessibility.reduced_motion {
             info!("Reduced motion disabled");
@@ -617,7 +618,7 @@ pub fn accessibility_input(
 /// Debug input system for development
 #[cfg(debug_assertions)]
 pub fn debug_input(
-    keyboard_input: Res<Input<KeyCode>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>, // FIXED
     mut snake_query: Query<&mut Snake>,
     mut level_manager: ResMut<LevelManager>,
     mut state_events: EventWriter<StateTransitionEvent>,
@@ -625,7 +626,7 @@ pub fn debug_input(
     // Debug controls (only in debug builds)
     if keyboard_input.pressed(KeyCode::ControlLeft) {
         // Skip level with Ctrl+N
-        if keyboard_input.just_pressed(KeyCode::N) {
+        if keyboard_input.just_pressed(KeyCode::KeyN) { // FIXED: N -> KeyN
             level_manager.current_level = (level_manager.current_level % 10) + 1;
             state_events.send(StateTransitionEvent::StartGame { 
                 character_id: 1, 
@@ -635,7 +636,7 @@ pub fn debug_input(
         }
         
         // Add snake length with Ctrl+L
-        if keyboard_input.just_pressed(KeyCode::L) {
+        if keyboard_input.just_pressed(KeyCode::KeyL) { // FIXED: L -> KeyL
             for mut snake in snake_query.iter_mut() {
                 snake.length += 5;
                 info!("Debug: Snake length increased to {}", snake.length);
@@ -643,7 +644,7 @@ pub fn debug_input(
         }
         
         // Toggle invincibility with Ctrl+I
-        if keyboard_input.just_pressed(KeyCode::I) {
+        if keyboard_input.just_pressed(KeyCode::KeyI) { // FIXED: I -> KeyI
             for mut snake in snake_query.iter_mut() {
                 snake.is_alive = true;
                 info!("Debug: Snake invincibility toggled");
