@@ -26,7 +26,8 @@ pub enum GameState {
 }
 
 /// === Pause Sub-State ===
-#[derive(States, Debug, Clone, PartialEq, Eq, Hash, Default, Reflect)]
+#[derive(SubStates, Debug, Clone, PartialEq, Eq, Hash, Default, Reflect)]
+#[source(GameState = GameState::Playing)]
 pub enum PauseState {
     #[default]
     Unpaused,
@@ -34,7 +35,8 @@ pub enum PauseState {
 }
 
 /// === Character Selection State ===
-#[derive(States, Debug, Clone, PartialEq, Eq, Hash, Default, Reflect)]
+#[derive(SubStates, Debug, Clone, PartialEq, Eq, Hash, Default, Reflect)]
+#[source(GameState = GameState::CharacterSelect)]
 pub enum CharacterSelectState {
     #[default]
     Overview,
@@ -45,7 +47,8 @@ pub enum CharacterSelectState {
 }
 
 /// === Cutscene Sub-State ===
-#[derive(States, Debug, Clone, PartialEq, Eq, Hash, Default, Reflect)]
+#[derive(SubStates, Debug, Clone, PartialEq, Eq, Hash, Default, Reflect)]
+#[source(GameState = GameState::Cutscene)]
 pub enum CutsceneState {
     #[default]
     Intro,

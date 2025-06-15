@@ -35,6 +35,9 @@ impl Default for SnakeDirection {
 pub struct ScoreResource {
     pub current_score: u32,
     pub current_level_score: u32,
+    pub level_score: u32, // ADDED: Missing field referenced in systems
+    pub food_eaten: u32,  // ADDED: Missing field referenced in systems  
+    pub time_bonus: u32,  // ADDED: Missing field referenced in systems
     pub multiplier: f32,
     pub streak: u32,
 }
