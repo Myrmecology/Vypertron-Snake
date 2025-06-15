@@ -49,7 +49,8 @@ pub struct Achievement {
     pub unlock_date: Option<String>,
 }
 
-#[derive(Resource, Debug, Clone, Serialize, Deserialize, Reflect)]
+/// FIXED: Removed Serialize/Deserialize from GameSettings due to KeyCode serialization issues in Bevy 0.14
+#[derive(Resource, Debug, Clone, Reflect)]
 pub struct GameSettings {
     pub master_volume: f32,
     pub music_volume: f32,
@@ -92,7 +93,8 @@ pub enum DifficultyMode {
     Insane,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Reflect)]
+/// FIXED: Removed Serialize/Deserialize from ControlScheme due to KeyCode serialization issues in Bevy 0.14
+#[derive(Debug, Clone, Reflect)]
 pub struct ControlScheme {
     pub move_up: KeyCode,
     pub move_down: KeyCode,
@@ -181,7 +183,7 @@ pub struct LevelDefinition {
     pub time_limit: Option<f32>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Reflect)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Reflect)]
 pub enum WallPattern {
     Empty,
     BasicObstacles,
@@ -191,7 +193,8 @@ pub enum WallPattern {
     MultiRoom,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Reflect)]
+/// FIXED: Added PartialEq to SpecialMechanic to fix comparison errors
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Reflect)]
 pub enum SpecialMechanic {
     Teleporters,
     SpeedZones,
@@ -230,7 +233,7 @@ pub struct CharacterDefinition {
     pub unlock_requirement: UnlockRequirement,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Reflect)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Reflect)]
 pub enum CharacterAbility {
     None,
     SpeedBoost,
@@ -238,7 +241,7 @@ pub enum CharacterAbility {
     ScoreBooster,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Reflect)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Reflect)]
 pub enum UnlockRequirement {
     None,
     CompleteLevel(u32),
@@ -283,6 +286,27 @@ pub struct SaveLoadState {
     pub last_save_time: f64,
     pub auto_save_interval: f64,
     pub save_location: String,
+}
+
+// ===============================
+// STATE TRANSITION EVENTS
+// ===============================
+
+/// FIXED: Added StateTransitionEvent definition that was missing
+#[derive(Event, Debug, Clone)]
+pub enum StateTransitionEvent {
+    GameStart,
+    GameOver { 
+        final_score: u32,
+        cause: String,
+    },
+    LevelComplete { 
+        score: u32,
+        level: u32,
+    },
+    PauseGame,
+    ResumeGame,
+    ReturnToMenu,
 }
 
 

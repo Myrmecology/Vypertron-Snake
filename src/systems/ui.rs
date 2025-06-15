@@ -136,7 +136,8 @@ pub fn setup_ui_elements(
             TextStyle {
                 font: font.clone(),
                 font_size: 20.0,
-                color: Color::rgb(1.0, 0.8, 0.0), // Gold color
+                // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
+                color: Color::srgb(1.0, 0.8, 0.0), // Gold color
             },
         )
         .with_style(Style {
@@ -165,7 +166,8 @@ pub fn setup_ui_elements(
             TextStyle {
                 font: font.clone(),
                 font_size: 24.0,
-                color: Color::rgb(0.5, 1.0, 0.5), // Light green
+                // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
+                color: Color::srgb(0.5, 1.0, 0.5), // Light green
             },
         )
         .with_style(Style {
@@ -194,7 +196,8 @@ pub fn setup_ui_elements(
             TextStyle {
                 font: font.clone(),
                 font_size: 18.0,
-                color: Color::rgb(0.8, 0.8, 0.8),
+                // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
+                color: Color::srgb(0.8, 0.8, 0.8),
             },
         )
         .with_style(Style {
@@ -223,7 +226,8 @@ pub fn setup_ui_elements(
             TextStyle {
                 font: font.clone(),
                 font_size: 18.0,
-                color: Color::rgb(0.8, 0.8, 0.8),
+                // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
+                color: Color::srgb(0.8, 0.8, 0.8),
             },
         )
         .with_style(Style {
@@ -253,7 +257,8 @@ pub fn setup_ui_elements(
             TextStyle {
                 font: font.clone(),
                 font_size: 18.0,
-                color: Color::rgba(character.color[0], character.color[1], character.color[2], 1.0),
+                // FIXED: Changed Color::rgba to Color::srgba for Bevy 0.14
+                color: Color::srgba(character.color[0], character.color[1], character.color[2], 1.0),
             },
         )
         .with_style(Style {
@@ -282,7 +287,8 @@ pub fn setup_ui_elements(
             TextStyle {
                 font: font.clone(),
                 font_size: 14.0,
-                color: Color::rgb(0.6, 0.6, 0.6),
+                // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
+                color: Color::srgb(0.6, 0.6, 0.6),
             },
         )
         .with_style(Style {
@@ -305,8 +311,8 @@ fn get_current_high_score(
     level_manager: &LevelManager,
     character_selection: &CharacterSelection,
 ) -> u32 {
-    let level_index = (level_manager.current_level - 1) as usize;
-    let character_index = (character_selection.selected_character - 1) as usize;
+    let _level_index = (level_manager.current_level - 1) as usize;
+    let _character_index = (character_selection.selected_character - 1) as usize;
     
     // This would access the high score resource, but for now return a placeholder
     1000 // TODO: Access actual high score from resource
@@ -423,7 +429,8 @@ pub fn display_pause_menu(
                     flex_direction: FlexDirection::Column,
                     ..default()
                 },
-                background_color: Color::rgba(0.0, 0.0, 0.0, 0.7).into(),
+                // FIXED: Changed Color::rgba to Color::srgba for Bevy 0.14
+                background_color: Color::srgba(0.0, 0.0, 0.0, 0.7).into(),
                 z_index: ZIndex::Global(1000),
                 ..default()
             },
@@ -440,43 +447,52 @@ pub fn display_pause_menu(
             ));
             
             // Resume instruction
-            parent.spawn(TextBundle::from_section(
-                "Press SPACEBAR to Resume",
-                TextStyle {
-                    font: font.clone(),
-                    font_size: 24.0,
-                    color: Color::rgb(0.8, 0.8, 0.8),
-                },
-            ).with_style(Style {
-                margin: UiRect::top(Val::Px(20.0)),
-                ..default()
-            }));
+            parent.spawn(
+                TextBundle::from_section(
+                    "Press SPACEBAR to Resume",
+                    TextStyle {
+                        font: font.clone(),
+                        font_size: 24.0,
+                        // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
+                        color: Color::srgb(0.8, 0.8, 0.8),
+                    },
+                ).with_style(Style {
+                    margin: UiRect::top(Val::Px(20.0)),
+                    ..default()
+                })
+            );
             
             // Additional options
-            parent.spawn(TextBundle::from_section(
-                "R: Restart Level • Q: Quit to Menu • ESC: Quit to Menu",
-                TextStyle {
-                    font: font.clone(),
-                    font_size: 16.0,
-                    color: Color::rgb(0.6, 0.6, 0.6),
-                },
-            ).with_style(Style {
-                margin: UiRect::top(Val::Px(30.0)),
-                ..default()
-            }));
+            parent.spawn(
+                TextBundle::from_section(
+                    "R: Restart Level • Q: Quit to Menu • ESC: Quit to Menu",
+                    TextStyle {
+                        font: font.clone(),
+                        font_size: 16.0,
+                        // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
+                        color: Color::srgb(0.6, 0.6, 0.6),
+                    },
+                ).with_style(Style {
+                    margin: UiRect::top(Val::Px(30.0)),
+                    ..default()
+                })
+            );
             
             // Current stats
-            parent.spawn(TextBundle::from_section(
-                "Game Statistics",
-                TextStyle {
-                    font: font.clone(),
-                    font_size: 20.0,
-                    color: Color::rgb(0.9, 0.9, 0.9),
-                },
-            ).with_style(Style {
-                margin: UiRect::top(Val::Px(40.0)),
-                ..default()
-            }));
+            parent.spawn(
+                TextBundle::from_section(
+                    "Game Statistics",
+                    TextStyle {
+                        font: font.clone(),
+                        font_size: 20.0,
+                        // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
+                        color: Color::srgb(0.9, 0.9, 0.9),
+                    },
+                ).with_style(Style {
+                    margin: UiRect::top(Val::Px(40.0)),
+                    ..default()
+                })
+            );
         });
     }
 }
@@ -510,7 +526,7 @@ pub fn setup_game_over_screen(
     score_resource: Res<ScoreResource>,
     level_manager: Res<LevelManager>,
     character_selection: Res<CharacterSelection>,
-    game_statistics: Res<GameStatistics>,
+    _game_statistics: Res<GameStatistics>,
 ) {
     let font = asset_handles.fonts.get("main_font").cloned().unwrap_or_default();
     let character = &character_selection.characters[(character_selection.selected_character - 1) as usize];
@@ -529,7 +545,8 @@ pub fn setup_game_over_screen(
                 flex_direction: FlexDirection::Column,
                 ..default()
             },
-            background_color: Color::rgba(0.1, 0.0, 0.0, 0.9).into(),
+            // FIXED: Changed Color::rgba to Color::srgba for Bevy 0.14
+            background_color: Color::srgba(0.1, 0.0, 0.0, 0.9).into(),
             z_index: ZIndex::Global(2000),
             ..default()
         },
@@ -552,105 +569,122 @@ pub fn setup_game_over_screen(
                 TextStyle {
                     font: font.clone(),
                     font_size: 64.0,
-                    color: Color::rgb(1.0, 0.2, 0.2),
+                    // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
+                    color: Color::srgb(1.0, 0.2, 0.2),
                 },
             ),
             AnimatedText {
                 animation_type: TextAnimation::Flash,
                 timer: 0.0,
                 duration: 2.0,
-                original_color: Color::rgb(1.0, 0.2, 0.2),
-                target_color: Color::rgb(1.0, 0.8, 0.8),
+                // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
+                original_color: Color::srgb(1.0, 0.2, 0.2),
+                target_color: Color::srgb(1.0, 0.8, 0.8),
             },
         ));
         
         // Character that died
-        parent.spawn(TextBundle::from_section(
-            format!("{} has fallen!", character.name),
-            TextStyle {
-                font: font.clone(),
-                font_size: 24.0,
-                color: Color::rgba(character.color[0], character.color[1], character.color[2], 1.0),
-            },
-        ).with_style(Style {
-            margin: UiRect::top(Val::Px(20.0)),
-            ..default()
-        }));
+        parent.spawn(
+            TextBundle::from_section(
+                format!("{} has fallen!", character.name),
+                TextStyle {
+                    font: font.clone(),
+                    font_size: 24.0,
+                    // FIXED: Changed Color::rgba to Color::srgba for Bevy 0.14
+                    color: Color::srgba(character.color[0], character.color[1], character.color[2], 1.0),
+                },
+            ).with_style(Style {
+                margin: UiRect::top(Val::Px(20.0)),
+                ..default()
+            })
+        );
         
-        // Final score
+        // Final score - FIXED: Moved with_style() to before tuple
         parent.spawn((
             TextBundle::from_section(
                 format!("Final Score: {}", score_resource.current_score),
                 TextStyle {
                     font: font.clone(),
                     font_size: 32.0,
-                    color: Color::rgb(1.0, 0.8, 0.0),
+                    // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
+                    color: Color::srgb(1.0, 0.8, 0.0),
                 },
-            ),
+            ).with_style(Style {
+                margin: UiRect::top(Val::Px(30.0)),
+                ..default()
+            }),
             AnimatedText {
                 animation_type: TextAnimation::Pulse,
                 timer: 0.0,
                 duration: 1.5,
-                original_color: Color::rgb(1.0, 0.8, 0.0),
-                target_color: Color::rgb(1.0, 1.0, 0.5),
+                // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
+                original_color: Color::srgb(1.0, 0.8, 0.0),
+                target_color: Color::srgb(1.0, 1.0, 0.5),
             },
-        ).with_style(Style {
-            margin: UiRect::top(Val::Px(30.0)),
-            ..default()
-        }));
+        ));
         
         // Level reached
-        parent.spawn(TextBundle::from_section(
-            format!("Level Reached: {}/10", level_manager.current_level),
-            TextStyle {
-                font: font.clone(),
-                font_size: 20.0,
-                color: Color::WHITE,
-            },
-        ).with_style(Style {
-            margin: UiRect::top(Val::Px(20.0)),
-            ..default()
-        }));
+        parent.spawn(
+            TextBundle::from_section(
+                format!("Level Reached: {}/10", level_manager.current_level),
+                TextStyle {
+                    font: font.clone(),
+                    font_size: 20.0,
+                    color: Color::WHITE,
+                },
+            ).with_style(Style {
+                margin: UiRect::top(Val::Px(20.0)),
+                ..default()
+            })
+        );
         
         // Food eaten
-        parent.spawn(TextBundle::from_section(
-            format!("Food Eaten: {}", score_resource.food_eaten),
-            TextStyle {
-                font: font.clone(),
-                font_size: 18.0,
-                color: Color::rgb(0.8, 0.8, 0.8),
-            },
-        ).with_style(Style {
-            margin: UiRect::top(Val::Px(10.0)),
-            ..default()
-        }));
+        parent.spawn(
+            TextBundle::from_section(
+                format!("Food Eaten: {}", score_resource.food_eaten),
+                TextStyle {
+                    font: font.clone(),
+                    font_size: 18.0,
+                    // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
+                    color: Color::srgb(0.8, 0.8, 0.8),
+                },
+            ).with_style(Style {
+                margin: UiRect::top(Val::Px(10.0)),
+                ..default()
+            })
+        );
         
         // Score rank
         let rank = ScoreUtils::get_score_rank(score_resource.current_score);
-        parent.spawn(TextBundle::from_section(
-            format!("Rank: {}", rank.get_title()),
-            TextStyle {
-                font: font.clone(),
-                font_size: 24.0,
-                color: rank.get_color(),
-            },
-        ).with_style(Style {
-            margin: UiRect::top(Val::Px(20.0)),
-            ..default()
-        }));
+        parent.spawn(
+            TextBundle::from_section(
+                format!("Rank: {}", rank.get_title()),
+                TextStyle {
+                    font: font.clone(),
+                    font_size: 24.0,
+                    color: rank.get_color(),
+                },
+            ).with_style(Style {
+                margin: UiRect::top(Val::Px(20.0)),
+                ..default()
+            })
+        );
         
         // Controls
-        parent.spawn(TextBundle::from_section(
-            "SPACEBAR: Restart • ESC: Main Menu • S: Statistics",
-            TextStyle {
-                font: font.clone(),
-                font_size: 16.0,
-                color: Color::rgb(0.6, 0.6, 0.6),
-            },
-        ).with_style(Style {
-            margin: UiRect::top(Val::Px(40.0)),
-            ..default()
-        }));
+        parent.spawn(
+            TextBundle::from_section(
+                "SPACEBAR: Restart • ESC: Main Menu • S: Statistics",
+                TextStyle {
+                    font: font.clone(),
+                    font_size: 16.0,
+                    // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
+                    color: Color::srgb(0.6, 0.6, 0.6),
+                },
+            ).with_style(Style {
+                margin: UiRect::top(Val::Px(40.0)),
+                ..default()
+            })
+        );
     });
 }
 
@@ -684,7 +718,8 @@ pub fn setup_level_complete_screen(
                 flex_direction: FlexDirection::Column,
                 ..default()
             },
-            background_color: Color::rgba(0.0, 0.2, 0.0, 0.9).into(),
+            // FIXED: Changed Color::rgba to Color::srgba for Bevy 0.14
+            background_color: Color::srgba(0.0, 0.2, 0.0, 0.9).into(),
             z_index: ZIndex::Global(2000),
             ..default()
         },
@@ -707,15 +742,17 @@ pub fn setup_level_complete_screen(
                 TextStyle {
                     font: font.clone(),
                     font_size: 56.0,
-                    color: Color::rgb(0.2, 1.0, 0.2),
+                    // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
+                    color: Color::srgb(0.2, 1.0, 0.2),
                 },
             ),
             AnimatedText {
                 animation_type: TextAnimation::Rainbow,
                 timer: 0.0,
                 duration: 3.0,
-                original_color: Color::rgb(0.2, 1.0, 0.2),
-                target_color: Color::rgb(0.8, 1.0, 0.8),
+                // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
+                original_color: Color::srgb(0.2, 1.0, 0.2),
+                target_color: Color::srgb(0.8, 1.0, 0.8),
             },
         ));
         
@@ -726,95 +763,111 @@ pub fn setup_level_complete_screen(
             "Final Level"
         };
         
-        parent.spawn(TextBundle::from_section(
-            format!("Level {}: {}", completed_level, level_name),
-            TextStyle {
-                font: font.clone(),
-                font_size: 24.0,
-                color: Color::WHITE,
-            },
-        ).with_style(Style {
-            margin: UiRect::top(Val::Px(20.0)),
-            ..default()
-        }));
+        parent.spawn(
+            TextBundle::from_section(
+                format!("Level {}: {}", completed_level, level_name),
+                TextStyle {
+                    font: font.clone(),
+                    font_size: 24.0,
+                    color: Color::WHITE,
+                },
+            ).with_style(Style {
+                margin: UiRect::top(Val::Px(20.0)),
+                ..default()
+            })
+        );
         
         // Character success
-        parent.spawn(TextBundle::from_section(
-            format!("{} conquers another realm!", character.name),
-            TextStyle {
-                font: font.clone(),
-                font_size: 20.0,
-                color: Color::rgba(character.color[0], character.color[1], character.color[2], 1.0),
-            },
-        ).with_style(Style {
-            margin: UiRect::top(Val::Px(15.0)),
-            ..default()
-        }));
+        parent.spawn(
+            TextBundle::from_section(
+                format!("{} conquers another realm!", character.name),
+                TextStyle {
+                    font: font.clone(),
+                    font_size: 20.0,
+                    // FIXED: Changed Color::rgba to Color::srgba for Bevy 0.14
+                    color: Color::srgba(character.color[0], character.color[1], character.color[2], 1.0),
+                },
+            ).with_style(Style {
+                margin: UiRect::top(Val::Px(15.0)),
+                ..default()
+            })
+        );
         
-        // Level score
+        // Level score - FIXED: Moved with_style() to before tuple
         parent.spawn((
             TextBundle::from_section(
                 format!("Level Score: {}", score_resource.level_score),
                 TextStyle {
                     font: font.clone(),
                     font_size: 28.0,
-                    color: Color::rgb(1.0, 0.8, 0.0),
+                    // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
+                    color: Color::srgb(1.0, 0.8, 0.0),
                 },
-            ),
+            ).with_style(Style {
+                margin: UiRect::top(Val::Px(30.0)),
+                ..default()
+            }),
             AnimatedText {
                 animation_type: TextAnimation::ScoreIncrease,
                 timer: 0.0,
                 duration: 2.0,
-                original_color: Color::rgb(1.0, 0.8, 0.0),
-                target_color: Color::rgb(1.0, 1.0, 0.5),
+                // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
+                original_color: Color::srgb(1.0, 0.8, 0.0),
+                target_color: Color::srgb(1.0, 1.0, 0.5),
             },
-        ).with_style(Style {
-            margin: UiRect::top(Val::Px(30.0)),
-            ..default()
-        }));
+        ));
         
         // Bonuses (if any)
         if score_resource.time_bonus > 0 {
-            parent.spawn(TextBundle::from_section(
-                format!("⏱️ Time Bonus: +{}", score_resource.time_bonus),
-                TextStyle {
-                    font: font.clone(),
-                    font_size: 18.0,
-                    color: Color::rgb(0.5, 1.0, 0.8),
-                },
-            ).with_style(Style {
-                margin: UiRect::top(Val::Px(10.0)),
-                ..default()
-            }));
+            parent.spawn(
+                TextBundle::from_section(
+                    format!("⏱️ Time Bonus: +{}", score_resource.time_bonus),
+                    TextStyle {
+                        font: font.clone(),
+                        font_size: 18.0,
+                        // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
+                        color: Color::srgb(0.5, 1.0, 0.8),
+                    },
+                ).with_style(Style {
+                    margin: UiRect::top(Val::Px(10.0)),
+                    ..default()
+                })
+            );
         }
         
         // Next level preview (if not final level)
         if completed_level < 10 {
             let next_level_name = &level_manager.level_definitions[completed_level as usize].name;
-            parent.spawn(TextBundle::from_section(
-                format!("Next: {}", next_level_name),
-                TextStyle {
-                    font: font.clone(),
-                    font_size: 18.0,
-                    color: Color::rgb(0.8, 0.8, 1.0),
-                },
-            ).with_style(Style {
-                margin: UiRect::top(Val::Px(30.0)),
-                ..default()
-            }));
+            parent.spawn(
+                TextBundle::from_section(
+                    format!("Next: {}", next_level_name),
+                    TextStyle {
+                        font: font.clone(),
+                        font_size: 18.0,
+                        // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
+                        color: Color::srgb(0.8, 0.8, 1.0),
+                    },
+                ).with_style(Style {
+                    margin: UiRect::top(Val::Px(30.0)),
+                    ..default()
+                })
+            );
         } else {
             // Final level completed
-            parent.spawn(TextBundle::from_section(
-                "🏆 ALL LEVELS COMPLETED! YOU ARE THE VYPERTRON CHAMPION!",
-                TextStyle {
-                    font: font.clone(),
-                    font_size: 20.0,
-                    color: Color::rgb(1.0, 0.8, 0.0),
-                },
-            ).with_style(Style {
-                margin: UiRect::top(Val::Px(30.0)),
-                ..default()
-            }));
+            parent.spawn(
+                TextBundle::from_section(
+                    "🏆 ALL LEVELS COMPLETED! YOU ARE THE VYPERTRON CHAMPION!",
+                    TextStyle {
+                        font: font.clone(),
+                        font_size: 20.0,
+                        // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
+                        color: Color::srgb(1.0, 0.8, 0.0),
+                    },
+                ).with_style(Style {
+                    margin: UiRect::top(Val::Px(30.0)),
+                    ..default()
+                })
+            );
         }
         
         // Controls
@@ -824,17 +877,20 @@ pub fn setup_level_complete_screen(
             "SPACEBAR: Play Again • ESC: Main Menu • You're Amazing!"
         };
         
-        parent.spawn(TextBundle::from_section(
-            controls_text,
-            TextStyle {
-                font: font.clone(),
-                font_size: 16.0,
-                color: Color::rgb(0.6, 0.6, 0.6),
-            },
-        ).with_style(Style {
-            margin: UiRect::top(Val::Px(40.0)),
-            ..default()
-        }));
+        parent.spawn(
+            TextBundle::from_section(
+                controls_text,
+                TextStyle {
+                    font: font.clone(),
+                    font_size: 16.0,
+                    // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
+                    color: Color::srgb(0.6, 0.6, 0.6),
+                },
+            ).with_style(Style {
+                margin: UiRect::top(Val::Px(40.0)),
+                ..default()
+            })
+        );
     });
 }
 
@@ -851,12 +907,13 @@ pub fn spawn_popup_notification(
 ) {
     let font = asset_handles.fonts.get("main_font").cloned().unwrap_or_default();
     
+    // FIXED: Changed all Color::rgb to Color::srgb for Bevy 0.14
     let (color, font_size, lifetime) = match notification_type {
-        NotificationType::ScoreGain => (Color::rgb(1.0, 1.0, 0.2), 20.0, 1.5),
-        NotificationType::Achievement => (Color::rgb(1.0, 0.5, 0.0), 24.0, 3.0),
-        NotificationType::Warning => (Color::rgb(1.0, 0.2, 0.2), 22.0, 2.0),
-        NotificationType::LevelUp => (Color::rgb(0.2, 1.0, 0.2), 28.0, 2.5),
-        NotificationType::SpecialFood => (Color::rgb(0.8, 0.2, 1.0), 18.0, 2.0),
+        NotificationType::ScoreGain => (Color::srgb(1.0, 1.0, 0.2), 20.0, 1.5),
+        NotificationType::Achievement => (Color::srgb(1.0, 0.5, 0.0), 24.0, 3.0),
+        NotificationType::Warning => (Color::srgb(1.0, 0.2, 0.2), 22.0, 2.0),
+        NotificationType::LevelUp => (Color::srgb(0.2, 1.0, 0.2), 28.0, 2.5),
+        NotificationType::SpecialFood => (Color::srgb(0.8, 0.2, 1.0), 18.0, 2.0),
     };
     
     commands.spawn((
@@ -903,7 +960,7 @@ pub fn update_popup_notifications(
         transform.translation.y += 50.0 * time.delta_seconds();
         
         // Fade out over time
-        let alpha = (1.0 - popup.age / popup.lifetime).max(0.0);
+        let _alpha = (1.0 - popup.age / popup.lifetime).max(0.0);
         // Note: In a real implementation, we'd update the text color alpha
         
         // Remove when expired
@@ -952,7 +1009,7 @@ pub fn update_animated_text(
             },
             TextAnimation::ScoreIncrease => {
                 let bounce = AnimationUtils::apply_easing(progress, &EasingType::Bounce);
-                let scale = 1.0 + bounce * 0.5;
+                let _scale = 1.0 + bounce * 0.5;
                 // Note: Scale would be applied to transform in a real implementation
             },
             TextAnimation::TypeWriter => {

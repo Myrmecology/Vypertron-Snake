@@ -147,6 +147,7 @@ pub struct ColorUtils;
 
 impl ColorUtils {
     /// Create color from HSV values
+    /// FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
     pub fn hsv_to_rgb(h: f32, s: f32, v: f32) -> Color {
         let c = v * s;
         let x = c * (1.0 - ((h / 60.0) % 2.0 - 1.0).abs());
@@ -166,128 +167,142 @@ impl ColorUtils {
             (c, 0.0, x)
         };
         
-        Color::rgb(r_prime + m, g_prime + m, b_prime + m)
+        Color::srgb(r_prime + m, g_prime + m, b_prime + m)
     }
     
     /// Interpolate between two colors
+    /// FIXED: Updated color access methods for Bevy 0.14
     pub fn lerp_color(color1: Color, color2: Color, t: f32) -> Color {
         let t = t.clamp(0.0, 1.0);
-        Color::rgba(
-            MathUtils::lerp(color1.r(), color2.r(), t),
-            MathUtils::lerp(color1.g(), color2.g(), t),
-            MathUtils::lerp(color1.b(), color2.b(), t),
-            MathUtils::lerp(color1.a(), color2.a(), t),
+        let c1 = color1.to_srgba();
+        let c2 = color2.to_srgba();
+        
+        Color::srgba(
+            MathUtils::lerp(c1.red, c2.red, t),
+            MathUtils::lerp(c1.green, c2.green, t),
+            MathUtils::lerp(c1.blue, c2.blue, t),
+            MathUtils::lerp(c1.alpha, c2.alpha, t),
         )
     }
     
     /// Create pulsing color effect
+    /// FIXED: Updated color access methods for Bevy 0.14
     pub fn pulse_color(base_color: Color, pulse_intensity: f32, time: f32) -> Color {
         let pulse = (time * 4.0).sin() * 0.5 + 0.5; // 0.0 to 1.0
         let intensity = pulse * pulse_intensity;
+        let base = base_color.to_srgba();
         
-        Color::rgba(
-            (base_color.r() + intensity).min(1.0),
-            (base_color.g() + intensity).min(1.0),
-            (base_color.b() + intensity).min(1.0),
-            base_color.a(),
+        Color::srgba(
+            (base.red + intensity).min(1.0),
+            (base.green + intensity).min(1.0),
+            (base.blue + intensity).min(1.0),
+            base.alpha,
         )
     }
     
     /// Darken a color by a percentage
+    /// FIXED: Updated color access methods for Bevy 0.14
     pub fn darken(color: Color, amount: f32) -> Color {
         let factor = 1.0 - amount.clamp(0.0, 1.0);
-        Color::rgba(
-            color.r() * factor,
-            color.g() * factor,
-            color.b() * factor,
-            color.a(),
+        let c = color.to_srgba();
+        
+        Color::srgba(
+            c.red * factor,
+            c.green * factor,
+            c.blue * factor,
+            c.alpha,
         )
     }
     
     /// Brighten a color by a percentage
+    /// FIXED: Updated color access methods for Bevy 0.14
     pub fn brighten(color: Color, amount: f32) -> Color {
         let factor = 1.0 + amount.clamp(0.0, 1.0);
-        Color::rgba(
-            (color.r() * factor).min(1.0),
-            (color.g() * factor).min(1.0),
-            (color.b() * factor).min(1.0),
-            color.a(),
+        let c = color.to_srgba();
+        
+        Color::srgba(
+            (c.red * factor).min(1.0),
+            (c.green * factor).min(1.0),
+            (c.blue * factor).min(1.0),
+            c.alpha,
         )
     }
     
     /// Get character color by ID
+    /// FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
     pub fn get_character_color(character_id: u32) -> Color {
         match character_id {
-            1 => Color::rgb(0.2, 0.8, 0.2), // Verdant Viper - Green
-            2 => Color::rgb(0.1, 0.5, 1.0), // Electric Eel - Blue
-            3 => Color::rgb(1.0, 0.2, 0.1), // Crimson Crusher - Red
-            4 => Color::rgb(1.0, 0.8, 0.0), // Golden Guardian - Gold
-            _ => Color::rgb(0.5, 0.5, 0.5), // Default - Gray
+            1 => Color::srgb(0.2, 0.8, 0.2), // Verdant Viper - Green
+            2 => Color::srgb(0.1, 0.5, 1.0), // Electric Eel - Blue
+            3 => Color::srgb(1.0, 0.2, 0.1), // Crimson Crusher - Red
+            4 => Color::srgb(1.0, 0.8, 0.0), // Golden Guardian - Gold
+            _ => Color::srgb(0.5, 0.5, 0.5), // Default - Gray
         }
     }
     
     /// Get level theme color palette
+    /// FIXED: Changed all Color::rgb to Color::srgb for Bevy 0.14
     pub fn get_theme_palette(theme: &LevelTheme) -> ThemeColorPalette {
         match theme {
             LevelTheme::Classic => ThemeColorPalette {
-                primary: Color::rgb(0.2, 0.6, 0.2),
-                secondary: Color::rgb(0.4, 0.2, 0.1),
-                accent: Color::rgb(1.0, 1.0, 0.2),
-                background: Color::rgb(0.1, 0.3, 0.1),
+                primary: Color::srgb(0.2, 0.6, 0.2),
+                secondary: Color::srgb(0.4, 0.2, 0.1),
+                accent: Color::srgb(1.0, 1.0, 0.2),
+                background: Color::srgb(0.1, 0.3, 0.1),
             },
             LevelTheme::Digital => ThemeColorPalette {
-                primary: Color::rgb(0.0, 0.8, 1.0),
-                secondary: Color::rgb(0.2, 0.2, 0.3),
-                accent: Color::rgb(1.0, 0.0, 1.0),
-                background: Color::rgb(0.05, 0.05, 0.15),
+                primary: Color::srgb(0.0, 0.8, 1.0),
+                secondary: Color::srgb(0.2, 0.2, 0.3),
+                accent: Color::srgb(1.0, 0.0, 1.0),
+                background: Color::srgb(0.05, 0.05, 0.15),
             },
             LevelTheme::Forest => ThemeColorPalette {
-                primary: Color::rgb(0.1, 0.5, 0.1),
-                secondary: Color::rgb(0.3, 0.15, 0.05),
-                accent: Color::rgb(0.8, 0.8, 0.2),
-                background: Color::rgb(0.05, 0.2, 0.05),
+                primary: Color::srgb(0.1, 0.5, 0.1),
+                secondary: Color::srgb(0.3, 0.15, 0.05),
+                accent: Color::srgb(0.8, 0.8, 0.2),
+                background: Color::srgb(0.05, 0.2, 0.05),
             },
             LevelTheme::Desert => ThemeColorPalette {
-                primary: Color::rgb(0.8, 0.6, 0.3),
-                secondary: Color::rgb(0.6, 0.3, 0.1),
-                accent: Color::rgb(1.0, 0.8, 0.0),
-                background: Color::rgb(0.3, 0.2, 0.1),
+                primary: Color::srgb(0.8, 0.6, 0.3),
+                secondary: Color::srgb(0.6, 0.3, 0.1),
+                accent: Color::srgb(1.0, 0.8, 0.0),
+                background: Color::srgb(0.3, 0.2, 0.1),
             },
             LevelTheme::Ocean => ThemeColorPalette {
-                primary: Color::rgb(0.1, 0.3, 0.6),
-                secondary: Color::rgb(0.0, 0.2, 0.4),
-                accent: Color::rgb(0.0, 0.8, 0.8),
-                background: Color::rgb(0.0, 0.1, 0.3),
+                primary: Color::srgb(0.1, 0.3, 0.6),
+                secondary: Color::srgb(0.0, 0.2, 0.4),
+                accent: Color::srgb(0.0, 0.8, 0.8),
+                background: Color::srgb(0.0, 0.1, 0.3),
             },
             LevelTheme::Volcano => ThemeColorPalette {
-                primary: Color::rgb(0.8, 0.2, 0.0),
-                secondary: Color::rgb(0.4, 0.1, 0.0),
-                accent: Color::rgb(1.0, 0.6, 0.0),
-                background: Color::rgb(0.2, 0.05, 0.0),
+                primary: Color::srgb(0.8, 0.2, 0.0),
+                secondary: Color::srgb(0.4, 0.1, 0.0),
+                accent: Color::srgb(1.0, 0.6, 0.0),
+                background: Color::srgb(0.2, 0.05, 0.0),
             },
             LevelTheme::Ice => ThemeColorPalette {
-                primary: Color::rgb(0.7, 0.9, 1.0),
-                secondary: Color::rgb(0.4, 0.6, 0.8),
-                accent: Color::rgb(0.9, 0.9, 1.0),
-                background: Color::rgb(0.2, 0.3, 0.4),
+                primary: Color::srgb(0.7, 0.9, 1.0),
+                secondary: Color::srgb(0.4, 0.6, 0.8),
+                accent: Color::srgb(0.9, 0.9, 1.0),
+                background: Color::srgb(0.2, 0.3, 0.4),
             },
             LevelTheme::Space => ThemeColorPalette {
-                primary: Color::rgb(0.3, 0.3, 0.4),
-                secondary: Color::rgb(0.1, 0.1, 0.2),
-                accent: Color::rgb(0.8, 0.8, 1.0),
-                background: Color::rgb(0.02, 0.02, 0.05),
+                primary: Color::srgb(0.3, 0.3, 0.4),
+                secondary: Color::srgb(0.1, 0.1, 0.2),
+                accent: Color::srgb(0.8, 0.8, 1.0),
+                background: Color::srgb(0.02, 0.02, 0.05),
             },
             LevelTheme::NeonCity => ThemeColorPalette {
-                primary: Color::rgb(0.8, 0.0, 0.8),
-                secondary: Color::rgb(0.2, 0.0, 0.2),
-                accent: Color::rgb(0.0, 1.0, 1.0),
-                background: Color::rgb(0.1, 0.0, 0.1),
+                primary: Color::srgb(0.8, 0.0, 0.8),
+                secondary: Color::srgb(0.2, 0.0, 0.2),
+                accent: Color::srgb(0.0, 1.0, 1.0),
+                background: Color::srgb(0.1, 0.0, 0.1),
             },
             LevelTheme::FinalBoss => ThemeColorPalette {
-                primary: Color::rgb(0.6, 0.0, 0.0),
-                secondary: Color::rgb(0.3, 0.0, 0.0),
-                accent: Color::rgb(1.0, 0.0, 0.0),
-                background: Color::rgb(0.1, 0.0, 0.0),
+                primary: Color::srgb(0.6, 0.0, 0.0),
+                secondary: Color::srgb(0.3, 0.0, 0.0),
+                accent: Color::srgb(1.0, 0.0, 0.0),
+                background: Color::srgb(0.1, 0.0, 0.0),
             },
         }
     }
@@ -460,14 +475,15 @@ impl ScoreRank {
         }
     }
     
+    /// FIXED: Changed all Color::rgb to Color::srgb for Bevy 0.14
     pub fn get_color(&self) -> Color {
         match self {
-            ScoreRank::Beginner => Color::rgb(0.6, 0.6, 0.6),    // Gray
-            ScoreRank::Intermediate => Color::rgb(0.4, 0.8, 0.4), // Green
-            ScoreRank::Advanced => Color::rgb(0.4, 0.4, 1.0),     // Blue
-            ScoreRank::Expert => Color::rgb(0.8, 0.4, 1.0),       // Purple
-            ScoreRank::Master => Color::rgb(1.0, 0.6, 0.0),       // Orange
-            ScoreRank::Legendary => Color::rgb(1.0, 0.8, 0.0),    // Gold
+            ScoreRank::Beginner => Color::srgb(0.6, 0.6, 0.6),    // Gray
+            ScoreRank::Intermediate => Color::srgb(0.4, 0.8, 0.4), // Green
+            ScoreRank::Advanced => Color::srgb(0.4, 0.4, 1.0),     // Blue
+            ScoreRank::Expert => Color::srgb(0.8, 0.4, 1.0),       // Purple
+            ScoreRank::Master => Color::srgb(1.0, 0.6, 0.0),       // Orange
+            ScoreRank::Legendary => Color::srgb(1.0, 0.8, 0.0),    // Gold
         }
     }
 }
@@ -501,13 +517,13 @@ impl SaveUtils {
     }
     
     /// Save data to local storage (web) or file (desktop)
-    pub fn save_game_data<T: serde::Serialize>(data: &T, key: &str) -> Result<(), String> {
+    pub fn save_game_data<T: serde::Serialize>(data: &T, _key: &str) -> Result<(), String> {
         let json_str = Self::serialize_game_data(data)?;
         
         #[cfg(target_arch = "wasm32")]
         {
             use gloo_storage::{LocalStorage, Storage};
-            LocalStorage::set(key, json_str)
+            LocalStorage::set(_key, json_str)
                 .map_err(|e| format!("Failed to save to localStorage: {:?}", e))
         }
         
@@ -520,11 +536,11 @@ impl SaveUtils {
     }
     
     /// Load data from local storage (web) or file (desktop)
-    pub fn load_game_data<T: for<'de> serde::Deserialize<'de>>(key: &str) -> Result<T, String> {
+    pub fn load_game_data<T: for<'de> serde::Deserialize<'de>>(_key: &str) -> Result<T, String> {
         #[cfg(target_arch = "wasm32")]
         {
             use gloo_storage::{LocalStorage, Storage};
-            let json_str: String = LocalStorage::get(key)
+            let json_str: String = LocalStorage::get(_key)
                 .map_err(|e| format!("Failed to load from localStorage: {:?}", e))?;
             Self::deserialize_game_data(&json_str)
         }
@@ -549,7 +565,7 @@ pub struct InputUtils;
 impl InputUtils {
     /// Convert arrow keys to direction vector
     pub fn arrow_keys_to_direction(
-        keyboard_input: &Res<Input<KeyCode>>,
+        keyboard_input: &Res<ButtonInput<KeyCode>>,
         control_scheme: &ControlScheme,
     ) -> Option<Vec2> {
         if keyboard_input.just_pressed(control_scheme.move_up) {
@@ -567,7 +583,7 @@ impl InputUtils {
     
     /// Check if pause key was pressed
     pub fn is_pause_pressed(
-        keyboard_input: &Res<Input<KeyCode>>,
+        keyboard_input: &Res<ButtonInput<KeyCode>>,
         control_scheme: &ControlScheme,
     ) -> bool {
         keyboard_input.just_pressed(control_scheme.pause)
@@ -575,7 +591,7 @@ impl InputUtils {
     
     /// Check if select key was pressed
     pub fn is_select_pressed(
-        keyboard_input: &Res<Input<KeyCode>>,
+        keyboard_input: &Res<ButtonInput<KeyCode>>,
         control_scheme: &ControlScheme,
     ) -> bool {
         keyboard_input.just_pressed(control_scheme.select)
@@ -583,7 +599,7 @@ impl InputUtils {
     
     /// Check if back key was pressed
     pub fn is_back_pressed(
-        keyboard_input: &Res<Input<KeyCode>>,
+        keyboard_input: &Res<ButtonInput<KeyCode>>,
         control_scheme: &ControlScheme,
     ) -> bool {
         keyboard_input.just_pressed(control_scheme.back)
@@ -654,14 +670,16 @@ impl RandomUtils {
     }
     
     /// Generate random color variation
+    /// FIXED: Updated color access methods for Bevy 0.14
     pub fn random_color_variation(base_color: Color, variation: f32, rng: &mut impl Rng) -> Color {
         let var = variation.clamp(0.0, 1.0);
+        let base = base_color.to_srgba();
         
-        Color::rgba(
-            (base_color.r() + rng.gen_range(-var..var)).clamp(0.0, 1.0),
-            (base_color.g() + rng.gen_range(-var..var)).clamp(0.0, 1.0),
-            (base_color.b() + rng.gen_range(-var..var)).clamp(0.0, 1.0),
-            base_color.a(),
+        Color::srgba(
+            (base.red + rng.gen_range(-var..var)).clamp(0.0, 1.0),
+            (base.green + rng.gen_range(-var..var)).clamp(0.0, 1.0),
+            (base.blue + rng.gen_range(-var..var)).clamp(0.0, 1.0),
+            base.alpha,
         )
     }
 }

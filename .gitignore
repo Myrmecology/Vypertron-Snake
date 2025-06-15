@@ -1,6 +1,6 @@
 # Rust/Cargo generated files
 /target/
-Cargo.lock
+# Note: Cargo.lock should be committed for applications (games)
 
 # Bevy hot reloading
 .bevy/
@@ -10,6 +10,16 @@ Cargo.lock
 /pkg/
 *.wasm
 *.js.map
+/wasm-temp/
+wasm-pack.log
+bindgen.log
+
+# Rust compiler metadata
+.rustc_info.json
+*.rustc_info.json
+
+# Cache files
+CACHEDIR.TAG
 
 # IDE files
 .vscode/
@@ -17,6 +27,7 @@ Cargo.lock
 *.swp
 *.swo
 *~
+*.code-workspace
 
 # OS generated files
 .DS_Store
@@ -47,13 +58,6 @@ node_modules/
 # Game-specific temporary files
 *.tmp
 *.temp
-
-# Build artifacts for web deployment
-wasm-pack.log
-bindgen.log
-
-# VS Code workspace files
-*.code-workspace
 
 # Local environment files
 .env

@@ -135,6 +135,8 @@ pub enum UIElementType {
     Level,
     Timer,
     Lives,
+    Length,    // Added missing variant
+    Speed,     // Added missing variant
     PauseMenu,
     GameOverScreen,
     LevelCompleteScreen,
@@ -233,8 +235,8 @@ pub enum LevelTheme {
     FinalBoss,
 }
 
-// FIXED: Added Component derive to ParallaxLayer
-#[derive(Component, Debug, Clone, Reflect)]
+// FIXED: Added Component derive to ParallaxLayer and Copy for cloning
+#[derive(Component, Debug, Clone, Copy, Reflect)]
 pub struct ParallaxLayer {
     pub depth: f32,
     pub scroll_multiplier: f32,

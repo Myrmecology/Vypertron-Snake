@@ -56,14 +56,15 @@ pub enum ParticleType {
 // ===============================
 
 /// Trigger dramatic explosion when snake dies
+/// FIXED: Made snake_death_events mutable for Bevy 0.14
 pub fn trigger_death_explosion(
     mut commands: Commands,
     mut explosion_events: EventWriter<ExplosionEvent>,
     mut particle_events: EventWriter<ParticleEvent>,
-    snake_death_events: EventReader<SnakeDeathEvent>,
-    character_selection: Res<CharacterSelection>,
+    mut snake_death_events: EventReader<SnakeDeathEvent>,
+    _character_selection: Res<CharacterSelection>,
     mut play_sound_events: EventWriter<PlaySoundEvent>,
-    time: Res<Time>,
+    _time: Res<Time>,
 ) {
     for death_event in snake_death_events.read() {
         let character_color = ColorUtils::get_character_color(death_event.character_id);
@@ -80,7 +81,7 @@ pub fn trigger_death_explosion(
         
         // Multiple particle bursts with character color
         for i in 0..3 {
-            let delay = i as f32 * 0.2;
+            let _delay = i as f32 * 0.2;
             particle_events.send(ParticleEvent {
                 position: death_event.death_position + Vec2::new(
                     (i as f32 - 1.0) * 20.0,
@@ -211,11 +212,12 @@ fn create_explosion_effect(
     let world_pos = MathUtils::grid_to_world(explosion_event.position, crate::GRID_SIZE);
     
     // Main explosion circle
+    /// FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
     let explosion_color = explosion_event.character_color.unwrap_or(match explosion_event.explosion_type {
-        ExplosionType::Death => Color::rgb(1.0, 0.2, 0.0),
-        ExplosionType::FoodPickup => Color::rgb(1.0, 1.0, 0.2),
-        ExplosionType::WallBreak => Color::rgb(0.8, 0.4, 0.0),
-        ExplosionType::Victory => Color::rgb(0.2, 1.0, 0.2),
+        ExplosionType::Death => Color::srgb(1.0, 0.2, 0.0),
+        ExplosionType::FoodPickup => Color::srgb(1.0, 1.0, 0.2),
+        ExplosionType::WallBreak => Color::srgb(0.8, 0.4, 0.0),
+        ExplosionType::Victory => Color::srgb(0.2, 1.0, 0.2),
     });
     
     let explosion_material = materials.add(ColorMaterial::from(explosion_color));
@@ -269,7 +271,9 @@ fn create_shockwave_rings(
     materials: &mut Assets<ColorMaterial>,
 ) {
     for i in 0..3 {
-        let ring_color = Color::rgba(color.r(), color.g(), color.b(), 0.6 - i as f32 * 0.2);
+        // FIXED: Updated color access for Bevy 0.14
+        let color_srgba = color.to_srgba();
+        let ring_color = Color::srgba(color_srgba.red, color_srgba.green, color_srgba.blue, 0.6 - i as f32 * 0.2);
         let ring_material = materials.add(ColorMaterial::from(ring_color));
         let ring_mesh = meshes.add(Mesh::from(shape::Circle::new(crate::GRID_SIZE * 0.2)));
         
@@ -367,6 +371,9 @@ fn spawn_particle_system(
             rng.gen_range(-10.0..10.0),
         );
         
+        // FIXED: Updated color access for Bevy 0.14
+        let particle_srgba = particle_color.to_srgba();
+        
         commands.spawn((
             MaterialMesh2dBundle {
                 mesh: particle_mesh.into(),
@@ -390,7 +397,7 @@ fn spawn_particle_system(
                 },
                 age: 0.0,
                 start_color: particle_color,
-                end_color: Color::rgba(particle_color.r(), particle_color.g(), particle_color.b(), 0.0),
+                end_color: Color::srgba(particle_srgba.red, particle_srgba.green, particle_srgba.blue, 0.0),
                 start_scale: 1.0,
                 end_scale: match particle_event.particle_type {
                     ParticleType::Sparkle => 0.1,
@@ -430,7 +437,7 @@ pub fn animate_explosion_effects(
             ExplosionType::Death => {
                 // Expanding circle with fade
                 let scale = 1.0 + progress * 2.0;
-                let alpha = (1.0 - progress).powf(0.5);
+                let _alpha = (1.0 - progress).powf(0.5);
                 transform.scale = Vec3::splat(scale);
                 // Note: In a real implementation, we'd also update material alpha
             },
@@ -475,17 +482,17 @@ pub fn update_shockwave_rings(
         
         // Expand ring
         let progress = ring.age / ring.lifetime;
-        let eased_progress = AnimationUtils::apply_easing(progress, &EasingType::EaseOut);
+        let _eased_progress = AnimationUtils::apply_easing(progress, &EasingType::EaseOut);
         
         let current_radius = ring.start_radius + 
-            (ring.target_radius - ring.start_radius) * eased_progress;
+            (ring.target_radius - ring.start_radius) * progress;
         
         // Update scale to represent radius
         let scale = current_radius / ring.start_radius;
         transform.scale = Vec3::splat(scale);
         
         // Fade out over time
-        let alpha = (1.0 - progress).powf(2.0);
+        let _alpha = (1.0 - progress).powf(2.0);
         // Note: Alpha would be applied to material in real implementation
     }
 }
@@ -518,7 +525,7 @@ pub fn update_particle_effects(
         transform.scale = Vec3::splat(scale);
         
         // Fade out over time
-        let alpha = (1.0 - progress).powf(0.5);
+        let _alpha = (1.0 - progress).powf(0.5);
         // Note: Alpha would be applied to material color in real implementation
     }
 }
@@ -583,10 +590,10 @@ pub fn update_delayed_effects(
 /// Create celebration effects for level completion
 pub fn create_victory_effects(
     mut commands: Commands,
-    mut explosion_events: EventWriter<ExplosionEvent>,
+    mut _explosion_events: EventWriter<ExplosionEvent>,
     mut particle_events: EventWriter<ParticleEvent>,
-    level_complete_events: EventReader<StateTransitionEvent>,
-    level_manager: Res<LevelManager>,
+    mut level_complete_events: EventReader<StateTransitionEvent>,
+    _level_manager: Res<LevelManager>,
     character_selection: Res<CharacterSelection>,
 ) {
     for event in level_complete_events.read() {
@@ -657,6 +664,6 @@ pub fn cleanup_effects(
 }
 
 /// Initialize effects system
-pub fn initialize_effects_system(mut commands: Commands) {
+pub fn initialize_effects_system(_commands: Commands) {
     info!("Visual effects system initialized");
 }

@@ -49,7 +49,8 @@ impl Plugin for AudioPlugin {
 // ===============================
 
 /// Central audio management resource
-#[derive(Resource, Debug)]
+/// FIXED: Removed Debug since AudioSink doesn't implement Debug in Bevy 0.14
+#[derive(Resource)]
 pub struct AudioManager {
     /// Background music sink for control
     pub music_sink: Option<AudioSink>,
@@ -423,10 +424,10 @@ pub enum VolumeType {
 
 /// Initialize the audio system and load sounds
 pub fn initialize_audio_system(
-    mut commands: Commands,
+    _commands: Commands,
     asset_server: Res<AssetServer>,
     mut audio_manager: ResMut<AudioManager>,
-    mut sound_generator: ResMut<SoundEffectGenerator>,
+    sound_generator: ResMut<SoundEffectGenerator>,
 ) {
     info!("Initializing Vypertron-Snake audio system");
     
@@ -467,16 +468,17 @@ pub fn initialize_audio_system(
 
 /// Start background music when entering home screen
 pub fn start_background_music(
-    mut commands: Commands,
+    _commands: Commands,
     audio_manager: Res<AudioManager>,
     audio: Res<Audio>,
 ) {
     if let Some(music_handle) = audio_manager.loaded_sounds.get("background_music") {
         info!("Starting background music: snakesong.mp3");
         
-        let sink = audio.play_with_settings(
+        // FIXED: Changed Volume::new_relative to Volume::new for Bevy 0.14
+        let _sink = audio.play_with_settings(
             music_handle.clone(),
-            PlaybackSettings::LOOP.with_volume(Volume::new_relative(audio_manager.music_volume)),
+            PlaybackSettings::LOOP.with_volume(Volume::new(audio_manager.music_volume)),
         );
         
         // Store sink in resource for later control
@@ -486,7 +488,7 @@ pub fn start_background_music(
 
 /// Adjust music for gameplay
 pub fn adjust_music_for_gameplay(
-    audio_manager: ResMut<AudioManager>,
+    _audio_manager: ResMut<AudioManager>,
 ) {
     info!("Adjusting music for gameplay");
     // Could lower music volume during gameplay for better sound effect audibility
@@ -513,11 +515,11 @@ pub fn handle_audio_events(
     mut stop_events: EventReader<StopSoundEvent>,
     mut volume_events: EventReader<SetVolumeEvent>,
     mut audio_manager: ResMut<AudioManager>,
-    audio: Res<Audio>,
+    _audio: Res<Audio>,
 ) {
     // Handle play sound events
     for event in play_events.read() {
-        if let Some(audio_data) = audio_manager.procedural_sounds.get(&event.sound_id) {
+        if let Some(_audio_data) = audio_manager.procedural_sounds.get(&event.sound_id) {
             info!("Playing procedural sound: {}", event.sound_id);
             // In a real implementation, we'd convert the Vec<f32> to an AudioSource
             // and play it with the specified volume and pitch
@@ -554,14 +556,14 @@ pub fn handle_audio_events(
 pub fn update_background_music(
     game_state: Res<State<GameState>>,
     level_manager: Res<LevelManager>,
-    mut audio_manager: ResMut<AudioManager>,
+    _audio_manager: ResMut<AudioManager>,
 ) {
     // Adjust music based on current level or game state
     match game_state.get() {
         GameState::Playing => {
             // Could add level-specific music variations here
-            let level = level_manager.current_level;
-            if level >= 8 {
+            let _level = level_manager.current_level;
+            if _level >= 8 {
                 // Increase music intensity for final levels
             }
         },
@@ -576,14 +578,14 @@ pub fn update_background_music(
 pub fn update_spatial_audio(
     snake_query: Query<&Transform, (With<crate::components::Snake>, Without<Camera>)>,
     camera_query: Query<&Transform, With<Camera>>,
-    mut audio_manager: ResMut<AudioManager>,
+    _audio_manager: ResMut<AudioManager>,
 ) {
     // Calculate spatial audio based on snake position relative to camera
     if let (Ok(snake_transform), Ok(camera_transform)) = (snake_query.get_single(), camera_query.get_single()) {
         let distance = snake_transform.translation.distance(camera_transform.translation);
         
         // Adjust volume based on distance (for spatial sound effects)
-        let spatial_volume = (1.0 - (distance / 1000.0).min(1.0)).max(0.1);
+        let _spatial_volume = (1.0 - (distance / 1000.0).min(1.0)).max(0.1);
         
         // Apply spatial volume to relevant sound effects
         // This would be used for sounds like food pickup, wall hits, etc.
@@ -592,8 +594,8 @@ pub fn update_spatial_audio(
 
 /// Update ongoing sound effects
 pub fn update_sound_effects(
-    time: Res<Time>,
-    mut audio_manager: ResMut<AudioManager>,
+    _time: Res<Time>,
+    _audio_manager: ResMut<AudioManager>,
 ) {
     // Update any time-based sound effects
     // For example, fading out explosion sounds, looping ambient sounds, etc.
@@ -601,7 +603,7 @@ pub fn update_sound_effects(
 
 /// Generate and queue procedural sound effects
 pub fn generate_procedural_sfx(
-    mut play_sound_events: EventWriter<PlaySoundEvent>,
+    _play_sound_events: EventWriter<PlaySoundEvent>,
     // This system would respond to game events and generate appropriate sounds
 ) {
     // This system responds to various game events and triggers appropriate sounds

@@ -55,6 +55,7 @@ pub enum CutsceneState {
 }
 
 /// === Game Transition Events ===
+/// Note: This is a CUSTOM event, different from Bevy's StateTransitionEvent<S>
 #[derive(Event, Debug, Clone)]
 pub enum StateTransitionEvent {
     ToHomeScreen,
@@ -225,10 +226,11 @@ pub struct StateManagementPlugin;
 
 impl Plugin for StateManagementPlugin {
     fn build(&self, app: &mut App) {
-        app.add_state::<GameState>()
-            .add_state::<PauseState>()
-            .add_state::<CharacterSelectState>()
-            .add_state::<CutsceneState>()
+        // Bevy 0.14 syntax for states
+        app.init_state::<GameState>()
+            .add_sub_state::<PauseState>()
+            .add_sub_state::<CharacterSelectState>()
+            .add_sub_state::<CutsceneState>()
             .insert_resource(PreviousGameState::default())
             .insert_resource(GameProgression::default())
             .add_event::<StateTransitionEvent>()

@@ -200,8 +200,9 @@ pub fn check_wall_collision(
     mut snake_death_events: EventWriter<SnakeDeathEvent>,
     mut play_sound_events: EventWriter<PlaySoundEvent>,
     character_selection: Res<CharacterSelection>,
-    level_manager: Res<LevelManager>,
+    _level_manager: Res<LevelManager>,
     mut state_events: EventWriter<StateTransitionEvent>,
+    score_resource: Res<ScoreResource>,
 ) {
     for (snake_entity, snake_pos, snake) in snake_query.iter() {
         if !snake.is_alive {
@@ -271,9 +272,10 @@ pub fn check_wall_collision(
                     death_cause: DeathCause::WallCollision,
                 });
                 
-                // Transition to game over
+                // FIXED: Updated StateTransitionEvent usage to match new definition
                 state_events.send(StateTransitionEvent::GameOver { 
-                    final_score: score_resource.current_score 
+                    final_score: score_resource.current_score,
+                    cause: "Wall Collision".to_string(),
                 });
                 
                 info!("Snake died from wall collision at: {:?}", collision_pos);
@@ -334,9 +336,10 @@ pub fn check_self_collision(
                     death_cause: DeathCause::SelfCollision,
                 });
                 
-                // Transition to game over
+                // FIXED: Updated StateTransitionEvent usage to match new definition
                 state_events.send(StateTransitionEvent::GameOver { 
-                    final_score: score_resource.current_score 
+                    final_score: score_resource.current_score,
+                    cause: "Self Collision".to_string(),
                 });
                 
                 info!("Snake died from self-collision at: {:?}", collision_pos);
@@ -404,7 +407,7 @@ fn handle_teleporter_collision(
     snake_pos: &mut GridPosition,
     teleporter_query: &Query<(Entity, &GridPosition), (With<AudioTrigger>, Without<Snake>)>,
     current_teleporter: Entity,
-    level_def: &LevelDefinition,
+    _level_def: &LevelDefinition,
     play_sound_events: &mut EventWriter<PlaySoundEvent>,
 ) {
     // Find the other teleporter
@@ -471,8 +474,10 @@ pub fn check_boundary_collision(
                 death_cause: DeathCause::WallCollision,
             });
             
+            // FIXED: Updated StateTransitionEvent usage to match new definition
             state_events.send(StateTransitionEvent::GameOver { 
-                final_score: score_resource.current_score 
+                final_score: score_resource.current_score,
+                cause: "Boundary Collision".to_string(),
             });
             
             info!("Snake died from boundary collision at: {:?}", death_pos);
@@ -595,7 +600,8 @@ fn create_food_pickup_effect(
     meshes: &mut Assets<Mesh>,
     materials: &mut Assets<ColorMaterial>,
 ) {
-    let effect_material = materials.add(ColorMaterial::from(Color::rgb(1.0, 1.0, 0.0)));
+    // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
+    let effect_material = materials.add(ColorMaterial::from(Color::srgb(1.0, 1.0, 0.0)));
     let effect_mesh = meshes.add(Mesh::from(shape::Circle::new(crate::GRID_SIZE * 0.3)));
     
     commands.spawn((
@@ -626,7 +632,8 @@ fn create_wall_break_effect(
     meshes: &mut Assets<Mesh>,
     materials: &mut Assets<ColorMaterial>,
 ) {
-    let effect_material = materials.add(ColorMaterial::from(Color::rgb(1.0, 0.5, 0.0)));
+    // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
+    let effect_material = materials.add(ColorMaterial::from(Color::srgb(1.0, 0.5, 0.0)));
     let effect_mesh = meshes.add(Mesh::from(shape::Circle::new(crate::GRID_SIZE * 0.5)));
     
     commands.spawn((
@@ -657,7 +664,8 @@ fn create_self_collision_effect(
     meshes: &mut Assets<Mesh>,
     materials: &mut Assets<ColorMaterial>,
 ) {
-    let effect_material = materials.add(ColorMaterial::from(Color::rgb(1.0, 0.0, 0.0)));
+    // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
+    let effect_material = materials.add(ColorMaterial::from(Color::srgb(1.0, 0.0, 0.0)));
     let effect_mesh = meshes.add(Mesh::from(shape::Circle::new(crate::GRID_SIZE * 0.7)));
     
     commands.spawn((
@@ -688,7 +696,8 @@ fn create_teleport_effect(
     meshes: &mut Assets<Mesh>,
     materials: &mut Assets<ColorMaterial>,
 ) {
-    let effect_material = materials.add(ColorMaterial::from(Color::rgb(0.5, 0.0, 1.0)));
+    // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
+    let effect_material = materials.add(ColorMaterial::from(Color::srgb(0.5, 0.0, 1.0)));
     let effect_mesh = meshes.add(Mesh::from(shape::Circle::new(crate::GRID_SIZE * 0.6)));
     
     commands.spawn((
@@ -706,8 +715,9 @@ fn create_teleport_effect(
             velocity: Vec2::ZERO,
             lifetime: 1.0,
             age: 0.0,
-            start_color: Color::rgba(0.5, 0.0, 1.0, 0.8),
-            end_color: Color::rgba(0.5, 0.0, 1.0, 0.0),
+            // FIXED: Changed Color::rgba to Color::srgba for Bevy 0.14
+            start_color: Color::srgba(0.5, 0.0, 1.0, 0.8),
+            end_color: Color::srgba(0.5, 0.0, 1.0, 0.0),
             start_scale: 1.0,
             end_scale: 2.0,
         },
