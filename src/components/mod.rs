@@ -73,6 +73,44 @@ pub enum WallType {
 }
 
 // ===============================
+// SPECIAL EFFECT COMPONENTS (ADDED)
+// ===============================
+
+/// ADDED: Missing InvincibilityEffect component referenced in collision.rs
+#[derive(Component, Debug, Clone, Reflect)]
+pub struct InvincibilityEffect {
+    pub duration: f32,
+    pub remaining_time: f32,
+    pub flash_timer: f32,
+    pub flash_interval: f32,
+}
+
+impl Default for InvincibilityEffect {
+    fn default() -> Self {
+        Self {
+            duration: 3.0,
+            remaining_time: 3.0,
+            flash_timer: 0.0,
+            flash_interval: 0.2,
+        }
+    }
+}
+
+#[derive(Component, Debug, Clone, Reflect)]
+pub struct SpeedBoostEffect {
+    pub multiplier: f32,
+    pub duration: f32,
+    pub remaining_time: f32,
+}
+
+#[derive(Component, Debug, Clone, Reflect)]
+pub struct ScoreMultiplierEffect {
+    pub multiplier: f32,
+    pub duration: f32,
+    pub remaining_time: f32,
+}
+
+// ===============================
 // UI COMPONENTS
 // ===============================
 
@@ -135,8 +173,8 @@ pub enum UIElementType {
     Level,
     Timer,
     Lives,
-    Length,    // Added missing variant
-    Speed,     // Added missing variant
+    Length,
+    Speed,
     PauseMenu,
     GameOverScreen,
     LevelCompleteScreen,
@@ -220,6 +258,7 @@ pub struct LevelBackground {
     pub parallax_layers: Vec<ParallaxLayer>,
 }
 
+/// FIXED: Added missing LevelTheme variants referenced in resources
 #[derive(Debug, Clone, Reflect, Serialize, Deserialize)]
 #[reflect(Serialize, Deserialize)]
 pub enum LevelTheme {
@@ -233,9 +272,12 @@ pub enum LevelTheme {
     Space,
     NeonCity,
     FinalBoss,
+    // ADDED: Missing variants from level definitions
+    Cyber,
+    Shadow,
+    Cosmic,
 }
 
-// FIXED: Added Component derive to ParallaxLayer and Copy for cloning
 #[derive(Component, Debug, Clone, Copy, Reflect)]
 pub struct ParallaxLayer {
     pub depth: f32,
@@ -394,4 +436,3 @@ impl Default for AnimatedSprite {
         }
     }
 }
-
