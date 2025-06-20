@@ -74,7 +74,7 @@ pub fn handle_input(
     game_state: Res<State<GameState>>,
     pause_state: Res<State<PauseState>>,
     keyboard_input: Res<ButtonInput<KeyCode>>, // FIXED: Input<KeyCode> -> ButtonInput<KeyCode>
-    mouse_input: Res<ButtonInput<MouseButton>>, // FIXED: Input<MouseButton> -> ButtonInput<MouseButton>
+    _mouse_input: Res<ButtonInput<MouseButton>>, // FIXED: Input<MouseButton> -> ButtonInput<MouseButton>
     time: Res<Time>,
     mut input_buffer: ResMut<InputBuffer>,
     mut input_validation: ResMut<InputValidation>,
@@ -229,7 +229,7 @@ fn handle_global_input(
 /// Handle gameplay input (snake movement)
 fn handle_gameplay_input(
     keyboard_input: &Res<ButtonInput<KeyCode>>, // FIXED
-    time: &Res<Time>,
+    _time: &Res<Time>,
     input_buffer: &mut ResMut<InputBuffer>,
     input_validation: &mut ResMut<InputValidation>,
     game_settings: &Res<GameSettings>,
@@ -306,8 +306,8 @@ fn add_direction_to_buffer(direction: Vec2, input_buffer: &mut InputBuffer) {
 }
 
 /// Update and clean input buffer
-fn update_input_buffer(time: &Res<Time>, input_buffer: &mut ResMut<InputBuffer>) {
-    input_buffer.buffer_timer += time.delta_seconds();
+fn update_input_buffer(_time: &Res<Time>, input_buffer: &mut ResMut<InputBuffer>) {
+    input_buffer.buffer_timer += _time.delta_seconds();
     
     // Clean old buffered inputs
     if input_buffer.buffer_timer >= input_buffer.buffer_duration {
@@ -452,7 +452,7 @@ fn handle_settings_input(
 /// Handle credits screen input
 fn handle_credits_input(
     keyboard_input: &Res<ButtonInput<KeyCode>>, // FIXED
-    game_settings: &Res<GameSettings>,
+    _game_settings: &Res<GameSettings>,
     state_events: &mut EventWriter<StateTransitionEvent>,
     play_sound_events: &mut EventWriter<PlaySoundEvent>,
 ) {
@@ -478,8 +478,8 @@ pub fn consume_buffered_input(
         for mut snake in snake_query.iter_mut() {
             snake.direction = direction;
             
-            // Update global direction resource
-            *snake_direction = if direction.x > 0.0 {
+            // FIXED: Update global direction resource with double dereference
+            **snake_direction = if direction.x > 0.0 {
                 SnakeDirection::Right
             } else if direction.x < 0.0 {
                 SnakeDirection::Left
@@ -489,7 +489,8 @@ pub fn consume_buffered_input(
                 SnakeDirection::Down
             };
             
-            info!("Snake direction updated: {:?}", *snake_direction);
+            // FIXED: Use double dereference for logging
+            info!("Snake direction updated: {:?}", **snake_direction);
         }
         
         // Remove consumed input
@@ -556,7 +557,7 @@ pub fn input_visual_feedback(
 /// System to provide haptic feedback (if supported)
 pub fn input_haptic_feedback(
     keyboard_input: Res<ButtonInput<KeyCode>>, // FIXED
-    game_settings: Res<GameSettings>,
+    _game_settings: Res<GameSettings>,
     // Note: Bevy doesn't have built-in haptic support yet
     // This is a placeholder for future haptic feedback
 ) {
@@ -628,9 +629,9 @@ pub fn debug_input(
         // Skip level with Ctrl+N
         if keyboard_input.just_pressed(KeyCode::KeyN) { // FIXED: N -> KeyN
             level_manager.current_level = (level_manager.current_level % 10) + 1;
+            // FIXED: Use only character_id parameter
             state_events.send(StateTransitionEvent::StartGame { 
-                character_id: 1, 
-                level: level_manager.current_level 
+                character_id: 1
             });
             info!("Debug: Skipped to level {}", level_manager.current_level);
         }
