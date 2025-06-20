@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 // Custom modules - IMPORTANT: Import order matters!
-use crate::states::{StateTransitionEvent, *}; // FIXED: Explicitly import our custom StateTransitionEvent first
+use crate::states::{StateTransitionEvent, GameState, PauseState, CharacterSelectState, CutsceneState, *}; // FIXED: Explicitly import our custom StateTransitionEvent and states first
 use crate::systems::*;
 use crate::systems::input::*;
 use crate::systems::snake::*;
