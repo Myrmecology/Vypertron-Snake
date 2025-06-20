@@ -4,6 +4,7 @@
 //! Each level has its own theme, mechanics, layout, and progression requirements.
 
 use bevy::prelude::*;
+use bevy::sprite::MaterialMesh2dBundle;
 use crate::components::*;
 use crate::resources::*;
 use rand::prelude::*;
@@ -209,7 +210,7 @@ fn setup_level_boundaries(
     for x in 0..grid_width {
         // Top wall
         commands.spawn((
-            MaterialMeshBundle {
+            MaterialMesh2dBundle {
                 mesh: wall_mesh.clone().into(),
                 material: wall_material.clone(),
                 transform: Transform::from_xyz(
@@ -229,7 +230,7 @@ fn setup_level_boundaries(
         
         // Bottom wall
         commands.spawn((
-            MaterialMeshBundle {
+            MaterialMesh2dBundle {
                 mesh: wall_mesh.clone().into(),
                 material: wall_material.clone(),
                 transform: Transform::from_xyz(
@@ -252,7 +253,7 @@ fn setup_level_boundaries(
     for y in 1..(grid_height - 1) {
         // Left wall
         commands.spawn((
-            MaterialMeshBundle {
+            MaterialMesh2dBundle {
                 mesh: wall_mesh.clone().into(),
                 material: wall_material.clone(),
                 transform: Transform::from_xyz(
@@ -272,7 +273,7 @@ fn setup_level_boundaries(
         
         // Right wall
         commands.spawn((
-            MaterialMeshBundle {
+            MaterialMesh2dBundle {
                 mesh: wall_mesh.clone().into(),
                 material: wall_material.clone(),
                 transform: Transform::from_xyz(
@@ -364,7 +365,7 @@ fn setup_basic_obstacles(
         let y = rng.gen_range(3..(grid_height - 3));
         
         commands.spawn((
-            MaterialMeshBundle {
+            MaterialMesh2dBundle {
                 mesh: wall_mesh.clone().into(),
                 material: wall_material.clone(),
                 transform: Transform::from_xyz(
@@ -405,7 +406,7 @@ fn setup_maze_pattern(
         for y in 2..(grid_height - 2) {
             if y % 4 != 0 { // Leave gaps for corridors
                 commands.spawn((
-                    MaterialMeshBundle {
+                    MaterialMesh2dBundle {
                         mesh: wall_mesh.clone().into(),
                         material: wall_material.clone(),
                         transform: Transform::from_xyz(
@@ -448,7 +449,7 @@ fn setup_moving_walls(
         let y = grid_height / 2;
         
         commands.spawn((
-            MaterialMeshBundle {
+            MaterialMesh2dBundle {
                 mesh: wall_mesh.clone().into(),
                 material: wall_material.clone(),
                 transform: Transform::from_xyz(
@@ -504,7 +505,7 @@ fn setup_breakable_walls(
                     let y = (center_y as i32 + dy) as u32;
                     
                     commands.spawn((
-                        MaterialMeshBundle {
+                        MaterialMesh2dBundle {
                             mesh: wall_mesh.clone().into(),
                             material: wall_material.clone(),
                             transform: Transform::from_xyz(
@@ -549,7 +550,7 @@ fn setup_multi_room_layout(
     for y in 2..(grid_height - 2) {
         if y != mid_y - 1 && y != mid_y && y != mid_y + 1 { // Leave passage
             commands.spawn((
-                MaterialMeshBundle {
+                MaterialMesh2dBundle {
                     mesh: wall_mesh.clone().into(),
                     material: wall_material.clone(),
                     transform: Transform::from_xyz(
@@ -573,7 +574,7 @@ fn setup_multi_room_layout(
     for x in 2..(grid_width - 2) {
         if x != mid_x - 1 && x != mid_x && x != mid_x + 1 { // Leave passage
             commands.spawn((
-                MaterialMeshBundle {
+                MaterialMesh2dBundle {
                     mesh: wall_mesh.clone().into(),
                     material: wall_material.clone(),
                     transform: Transform::from_xyz(
