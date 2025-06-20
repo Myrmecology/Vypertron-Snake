@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
-// Custom modules
-use crate::states::*;
+// Custom modules - IMPORTANT: Import order matters!
+use crate::states::{StateTransitionEvent, *}; // FIXED: Explicitly import our custom StateTransitionEvent first
 use crate::systems::*;
 use crate::systems::input::*;
 use crate::systems::snake::*;
@@ -24,7 +24,7 @@ impl Plugin for GamePlugin {
             .add_sub_state::<CutsceneState>();
 
         // === Events ===
-        app.add_event::<StateTransitionEvent>() // ADDED: Our custom state transition event
+        app.add_event::<StateTransitionEvent>() // FIXED: Using our custom StateTransitionEvent
             .add_event::<FoodCollisionEvent>()
             .add_event::<WallCollisionEvent>()
             .add_event::<SelfCollisionEvent>()
@@ -41,7 +41,7 @@ impl Plugin for GamePlugin {
             .insert_resource(LevelManager::default())
             .insert_resource(CharacterSelection::default())
             .insert_resource(GameTimer(Timer::from_seconds(0.0, TimerMode::Repeating)))
-            .insert_resource(SnakeDirection::Right)
+            .insert_resource(SnakeDirection::Right) // FIXED: Now has Resource trait
             .insert_resource(ScoreResource::default())
             .insert_resource(PreviousGameState::default()) // ADDED: State management resource
             .insert_resource(GameProgression::default()) // ADDED: Game progression tracking
