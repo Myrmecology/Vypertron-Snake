@@ -382,7 +382,7 @@ fn spawn_food_at_position(
     
     let food_material = materials.add(ColorMaterial::from(color));
     let food_size = crate::GRID_SIZE * size_multiplier;
-    let food_mesh = meshes.add(Mesh::from(shape::Circle::new(food_size * 0.4)));
+    let food_mesh = meshes.add(Circle::new(food_size * 0.4)); // FIXED: shape::Circle -> Circle
     
     // Calculate expiration timer for special foods
     let expiration_timer = match food_type {
@@ -392,7 +392,7 @@ fn spawn_food_at_position(
     };
     
     commands.spawn((
-        MaterialMesh2dBundle {
+        ColorMesh2dBundle { // FIXED: MaterialMesh2dBundle -> ColorMesh2dBundle
             mesh: food_mesh.into(),
             material: food_material,
             transform: Transform::from_xyz(
@@ -432,22 +432,22 @@ fn spawn_food_at_position(
 fn get_food_visual_properties(food_type: &FoodType, level: u32) -> (Color, f32, u32) {
     match food_type {
         FoodType::Normal => (
-            Color::rgb(1.0, 0.2, 0.2), // Red
+            Color::srgb(1.0, 0.2, 0.2), // FIXED: Color::rgb -> Color::srgb
             0.7,
             ScoreUtils::calculate_food_score(food_type, level),
         ),
         FoodType::Bonus => (
-            Color::rgb(0.2, 1.0, 0.2), // Green
+            Color::srgb(0.2, 1.0, 0.2), // FIXED: Color::rgb -> Color::srgb
             0.8,
             ScoreUtils::calculate_food_score(food_type, level),
         ),
         FoodType::Speed => (
-            Color::rgb(0.2, 0.2, 1.0), // Blue
+            Color::srgb(0.2, 0.2, 1.0), // FIXED: Color::rgb -> Color::srgb
             0.9,
             ScoreUtils::calculate_food_score(food_type, level),
         ),
         FoodType::Golden => (
-            Color::rgb(1.0, 0.8, 0.0), // Gold
+            Color::srgb(1.0, 0.8, 0.0), // FIXED: Color::rgb -> Color::srgb
             1.0,
             ScoreUtils::calculate_food_score(food_type, level),
         ),
@@ -530,7 +530,7 @@ pub fn update_food_expiration(
                 // Rapid flashing to indicate expiration
                 let flash_rate = 8.0;
                 let flash = (time.elapsed_seconds() * flash_rate).sin();
-                let alpha = if flash > 0.0 { 1.0 } else { 0.3 };
+                let _alpha = if flash > 0.0 { 1.0 } else { 0.3 }; // FIXED: Added underscore prefix for unused variable
                 
                 // This would ideally affect the material color, but we'll use scale for now
                 let warning_scale = if flash > 0.0 { 1.2 } else { 0.8 };
@@ -630,7 +630,7 @@ pub fn cleanup_food(
 /// Track food-related statistics
 pub fn update_food_statistics(
     food_query: Query<&Food>,
-    mut game_statistics: ResMut<GameStatistics>,
+    mut _game_statistics: ResMut<GameStatistics>, // FIXED: Added underscore prefix for unused parameter
     time: Res<Time>,
 ) {
     // Count food types currently on field
