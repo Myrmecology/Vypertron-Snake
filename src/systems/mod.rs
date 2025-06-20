@@ -24,7 +24,7 @@ pub fn setup_camera(mut commands: Commands) {
 
 /// Load global assets at startup
 pub fn load_global_assets(
-    mut commands: Commands,
+    _commands: Commands,
     asset_server: Res<AssetServer>,
     mut asset_handles: ResMut<AssetHandles>,
 ) {
@@ -144,7 +144,7 @@ pub fn setup_home_screen(
     commands.spawn((
         SpriteBundle {
             sprite: Sprite {
-                color: Color::rgb(0.1, 0.1, 0.2),
+                color: Color::srgb(0.1, 0.1, 0.2), // FIXED: rgb -> srgb
                 custom_size: Some(Vec2::new(crate::DEFAULT_WINDOW_WIDTH, crate::DEFAULT_WINDOW_HEIGHT)),
                 ..default()
             },
@@ -160,7 +160,7 @@ pub fn setup_home_screen(
             TextStyle {
                 font: asset_handles.fonts.get("main_font").cloned().unwrap_or_default(),
                 font_size: 48.0,
-                color: Color::rgb(0.0, 1.0, 0.5),
+                color: Color::srgb(0.0, 1.0, 0.5), // FIXED: rgb -> srgb
             },
         )
         .with_style(Style {
@@ -189,7 +189,7 @@ pub fn setup_home_screen(
             TextStyle {
                 font: asset_handles.fonts.get("main_font").cloned().unwrap_or_default(),
                 font_size: 24.0,
-                color: Color::rgb(0.8, 0.8, 0.8),
+                color: Color::srgb(0.8, 0.8, 0.8), // FIXED: rgb -> srgb
             },
         )
         .with_style(Style {
@@ -249,7 +249,7 @@ pub fn setup_home_screen(
             TextStyle {
                 font: asset_handles.fonts.get("main_font").cloned().unwrap_or_default(),
                 font_size: 16.0,
-                color: Color::rgb(0.6, 0.6, 0.6),
+                color: Color::srgb(0.6, 0.6, 0.6), // FIXED: rgb -> srgb
             },
         )
         .with_style(Style {
@@ -291,7 +291,7 @@ fn create_title_snake(
         Vec2::new(40.0, 120.0),   // Complete circle
     ];
     
-    let snake_material = materials.add(ColorMaterial::from(Color::rgb(0.0, 0.8, 0.0)));
+    let snake_material = materials.add(ColorMaterial::from(Color::srgb(0.0, 0.8, 0.0))); // FIXED: rgb -> srgb
     let segment_mesh = meshes.add(Mesh::from(shape::Quad::new(Vec2::new(16.0, 16.0))));
     
     // Create title snake entity
@@ -321,11 +321,11 @@ fn spawn_menu_button(
     meshes: &mut Assets<Mesh>,
     materials: &mut Assets<ColorMaterial>,
 ) {
-    let button_material = materials.add(ColorMaterial::from(Color::rgb(0.2, 0.2, 0.3)));
+    let button_material = materials.add(ColorMaterial::from(Color::srgb(0.2, 0.2, 0.3))); // FIXED: rgb -> srgb
     let button_mesh = meshes.add(Mesh::from(shape::Quad::new(Vec2::new(180.0, 50.0))));
     
     // Button background
-    let button_entity = commands.spawn((
+    let _button_entity = commands.spawn((
         MaterialMesh2dBundle {
             mesh: button_mesh.into(),
             material: button_material,
@@ -392,20 +392,20 @@ pub fn animate_title_snake(
 
 /// Handle input on home screen
 pub fn handle_home_screen_input(
-    keyboard_input: Res<Input<KeyCode>>,
-    mouse_input: Res<Input<MouseButton>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>, // FIXED: Input -> ButtonInput
+    mouse_input: Res<ButtonInput<MouseButton>>, // FIXED: Input -> ButtonInput
     windows: Query<&Window>,
     camera_query: Query<(&Camera, &GlobalTransform)>,
     button_query: Query<(Entity, &Transform, &MenuButton)>,
     mut button_interaction_query: Query<&mut MenuButton>,
     mut state_events: EventWriter<StateTransitionEvent>,
-    game_settings: Res<GameSettings>,
+    _game_settings: Res<GameSettings>,
     mut play_sound_events: EventWriter<PlaySoundEvent>,
 ) {
     // Handle spacebar to start game
     if keyboard_input.just_pressed(KeyCode::Space) {
         play_sound_events.send(PlaySoundEvent::new("menu_select"));
-        state_events.send(StateTransitionEvent::ToCharacterSelect);
+        state_events.send(StateTransitionEvent::ToCharacterSelect); // FIXED: Use correct variant
         return;
     }
     
@@ -439,13 +439,13 @@ pub fn handle_home_screen_input(
                                     // Execute button action
                                     match &button.action {
                                         ButtonAction::StartGame => {
-                                            state_events.send(StateTransitionEvent::ToCharacterSelect);
+                                            state_events.send(StateTransitionEvent::ToCharacterSelect); // FIXED: Use correct variant
                                         },
                                         ButtonAction::OpenSettings => {
-                                            state_events.send(StateTransitionEvent::ToSettings);
+                                            state_events.send(StateTransitionEvent::ToSettings); // FIXED: Use correct variant
                                         },
                                         ButtonAction::ShowCredits => {
-                                            state_events.send(StateTransitionEvent::ToCredits);
+                                            state_events.send(StateTransitionEvent::ToCredits); // FIXED: Use correct variant
                                         },
                                         _ => {},
                                     }
@@ -470,7 +470,7 @@ pub fn handle_home_screen_input(
 pub fn update_menu_buttons(
     time: Res<Time>,
     mut query: Query<(&mut Transform, &mut MenuButton), With<MenuButton>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    _materials: ResMut<Assets<ColorMaterial>>,
 ) {
     for (mut transform, mut button) in query.iter_mut() {
         button.hover_timer += time.delta_seconds();
@@ -525,7 +525,7 @@ pub fn setup_character_selection(
     commands.spawn((
         SpriteBundle {
             sprite: Sprite {
-                color: Color::rgb(0.05, 0.1, 0.15),
+                color: Color::srgb(0.05, 0.1, 0.15), // FIXED: rgb -> srgb
                 custom_size: Some(Vec2::new(crate::DEFAULT_WINDOW_WIDTH, crate::DEFAULT_WINDOW_HEIGHT)),
                 ..default()
             },
@@ -541,7 +541,7 @@ pub fn setup_character_selection(
             TextStyle {
                 font: asset_handles.fonts.get("main_font").cloned().unwrap_or_default(),
                 font_size: 36.0,
-                color: Color::rgb(0.0, 1.0, 0.8),
+                color: Color::srgb(0.0, 1.0, 0.8), // FIXED: rgb -> srgb
             },
         )
         .with_style(Style {
@@ -624,12 +624,12 @@ fn create_character_card(
 ) {
     let card_color = if is_unlocked {
         if is_selected {
-            Color::rgba(character.color[0], character.color[1], character.color[2], 0.8)
+            Color::srgba(character.color[0], character.color[1], character.color[2], 0.8) // FIXED: rgba -> srgba
         } else {
-            Color::rgba(0.2, 0.2, 0.3, 0.8)
+            Color::srgba(0.2, 0.2, 0.3, 0.8) // FIXED: rgba -> srgba
         }
     } else {
-        Color::rgba(0.1, 0.1, 0.1, 0.8)
+        Color::srgba(0.1, 0.1, 0.1, 0.8) // FIXED: rgba -> srgba
     };
     
     let card_material = materials.add(ColorMaterial::from(card_color));
@@ -647,7 +647,7 @@ fn create_character_card(
             character_id: character.id,
             name: character.name.clone(),
             description: character.description.clone(),
-            color: Color::rgba(character.color[0], character.color[1], character.color[2], 1.0),
+            color: Color::srgba(character.color[0], character.color[1], character.color[2], 1.0), // FIXED: rgba -> srgba
             is_selected,
             animation_timer: 0.0,
             is_unlocked,
@@ -661,7 +661,7 @@ fn create_character_card(
             TextStyle {
                 font: asset_handles.fonts.get("main_font").cloned().unwrap_or_default(),
                 font_size: 18.0,
-                color: if is_unlocked { Color::WHITE } else { Color::GRAY },
+                color: if is_unlocked { Color::WHITE } else { Color::srgb(0.5, 0.5, 0.5) }, // FIXED: GRAY -> srgb
             },
         )
         .with_style(Style {
@@ -679,7 +679,7 @@ fn create_character_card(
             TextStyle {
                 font: asset_handles.fonts.get("main_font").cloned().unwrap_or_default(),
                 font_size: 12.0,
-                color: if is_unlocked { Color::rgb(0.8, 0.8, 0.8) } else { Color::DARK_GRAY },
+                color: if is_unlocked { Color::srgb(0.8, 0.8, 0.8) } else { Color::srgb(0.25, 0.25, 0.25) }, // FIXED: rgb -> srgb, DARK_GRAY -> srgb
             },
         )
         .with_style(Style {
@@ -694,8 +694,8 @@ fn create_character_card(
 
 /// Handle character selection input
 pub fn handle_character_selection_input(
-    keyboard_input: Res<Input<KeyCode>>,
-    mouse_input: Res<Input<MouseButton>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>, // FIXED: Input -> ButtonInput
+    mouse_input: Res<ButtonInput<MouseButton>>, // FIXED: Input -> ButtonInput
     windows: Query<&Window>,
     camera_query: Query<(&Camera, &GlobalTransform)>,
     mut character_selection: ResMut<CharacterSelection>,
@@ -707,15 +707,14 @@ pub fn handle_character_selection_input(
 ) {
     // Handle keyboard input
     if keyboard_input.just_pressed(KeyCode::Escape) {
-        state_events.send(StateTransitionEvent::ToHomeScreen);
+        state_events.send(StateTransitionEvent::ToHomeScreen); // FIXED: Use correct variant
         return;
     }
     
     if keyboard_input.just_pressed(KeyCode::Enter) {
         let selected_char = character_selection.selected_character;
-        state_events.send(StateTransitionEvent::StartGame { 
-            character_id: selected_char, 
-            level: 1 
+        state_events.send(StateTransitionEvent::StartGame { // FIXED: Remove level parameter
+            character_id: selected_char
         });
         return;
     }
@@ -742,7 +741,7 @@ pub fn handle_character_selection_input(
                 if let Some(world_pos) = camera.viewport_to_world_2d(camera_transform, cursor_pos) {
                     
                     // Check character card clicks
-                    for (entity, transform, card) in character_card_query.iter() {
+                    for (_entity, transform, card) in character_card_query.iter() {
                         if card.is_unlocked {
                             let card_bounds = Rect::from_center_size(
                                 transform.translation.truncate(),
@@ -753,8 +752,8 @@ pub fn handle_character_selection_input(
                                 character_selection.selected_character = card.character_id;
                                 play_sound_events.send(PlaySoundEvent::new("menu_select"));
                                 
-                                // Update character card selection states
-                                for (_, _, mut card_mut) in character_card_mutation_query.iter_mut() {
+                                // FIXED: Update character card selection states - simplified iteration
+                                for mut card_mut in character_card_mutation_query.iter_mut() {
                                     card_mut.is_selected = card_mut.character_id == character_selection.selected_character;
                                 }
                             }
@@ -762,7 +761,7 @@ pub fn handle_character_selection_input(
                     }
                     
                     // Check button clicks (reuse home screen button logic)
-                    for (entity, transform, button) in button_query.iter() {
+                    for (_entity, transform, button) in button_query.iter() {
                         let button_bounds = Rect::from_center_size(
                             transform.translation.truncate(),
                             Vec2::new(180.0, 50.0)
@@ -774,13 +773,12 @@ pub fn handle_character_selection_input(
                             match &button.action {
                                 ButtonAction::StartGame => {
                                     let selected_char = character_selection.selected_character;
-                                    state_events.send(StateTransitionEvent::StartGame { 
-                                        character_id: selected_char, 
-                                        level: 1 
+                                    state_events.send(StateTransitionEvent::StartGame { // FIXED: Remove level parameter
+                                        character_id: selected_char
                                     });
                                 },
                                 ButtonAction::QuitToMenu => {
-                                    state_events.send(StateTransitionEvent::ToHomeScreen);
+                                    state_events.send(StateTransitionEvent::ToHomeScreen); // FIXED: Use correct variant
                                 },
                                 _ => {},
                             }
@@ -856,14 +854,24 @@ pub fn handle_window_resize(
 pub fn update_animations(
     time: Res<Time>,
     mut query: Query<(&mut Style, &mut UIElement), With<UIElement>>,
-    mut text_query: Query<&mut Text>,
+    _text_query: Query<&mut Text>,
 ) {
-    for (mut style, mut ui_element) in query.iter_mut() {
+    for (_style, mut ui_element) in query.iter_mut() {
         if let Some(ref mut animation) = ui_element.animation {
             animation.timer += time.delta_seconds();
             
             let progress = (animation.timer / animation.duration).min(1.0);
-            let eased_progress = AnimationUtils::apply_easing(progress, &animation.animation_type);
+            
+            // FIXED: Convert UIAnimationType to EasingType or handle appropriately
+            let easing_type = match animation.animation_type {
+                UIAnimationType::FadeIn => EasingType::EaseInOut,
+                UIAnimationType::FadeOut => EasingType::EaseInOut,
+                UIAnimationType::Pulse => EasingType::EaseInOut,
+                UIAnimationType::Bounce => EasingType::Bounce,
+                UIAnimationType::Shake => EasingType::EaseInOut,
+                UIAnimationType::Slide => EasingType::EaseInOut,
+            };
+            let _eased_progress = AnimationUtils::apply_easing(progress, &easing_type);
             
             match animation.animation_type {
                 UIAnimationType::FadeIn => {
