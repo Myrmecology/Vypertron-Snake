@@ -7,7 +7,6 @@ use bevy::prelude::*;
 use crate::components::*;
 use crate::resources::*;
 use rand::prelude::*;
-use std::collections::HashMap;
 
 // ===============================
 // LEVEL LOADING SYSTEM
@@ -66,6 +65,9 @@ fn setup_level_background(
         LevelTheme::Space => "backgrounds/star_field.png",
         LevelTheme::NeonCity => "backgrounds/neon_skyline.png",
         LevelTheme::FinalBoss => "backgrounds/vypertron_lair.png",
+        LevelTheme::Cyber => "backgrounds/cyber_matrix.png",
+        LevelTheme::Shadow => "backgrounds/shadow_realm.png",
+        LevelTheme::Cosmic => "backgrounds/cosmic_void.png",
     };
     
     // Main background
@@ -103,6 +105,9 @@ fn get_scroll_speed_for_theme(theme: &LevelTheme) -> Vec2 {
         LevelTheme::Space => Vec2::new(0.0, 0.0), // Stationary stars
         LevelTheme::NeonCity => Vec2::new(1.5, 0.0), // Fast city lights
         LevelTheme::FinalBoss => Vec2::new(0.0, 0.0), // Dramatic stillness
+        LevelTheme::Cyber => Vec2::new(2.0, 1.0), // Fast data streams
+        LevelTheme::Shadow => Vec2::new(0.1, 0.3), // Eerie slow movement
+        LevelTheme::Cosmic => Vec2::new(0.0, 0.0), // Vast stillness
     }
 }
 
@@ -179,6 +184,9 @@ fn get_theme_name(theme: &LevelTheme) -> &'static str {
         LevelTheme::Space => "space",
         LevelTheme::NeonCity => "neon_city",
         LevelTheme::FinalBoss => "final_boss",
+        LevelTheme::Cyber => "cyber",
+        LevelTheme::Shadow => "shadow",
+        LevelTheme::Cosmic => "cosmic",
     }
 }
 
@@ -193,15 +201,15 @@ fn setup_level_boundaries(
     let wall_color = get_wall_color_for_theme(&level_def.theme);
     
     let wall_material = materials.add(ColorMaterial::from(wall_color));
-    let wall_mesh = meshes.add(Mesh::from(shape::Quad::new(Vec2::new(
+    let wall_mesh = meshes.add(Mesh::from(Rectangle::new(
         crate::GRID_SIZE, crate::GRID_SIZE
-    ))));
+    )));
     
     // Top and bottom boundaries
     for x in 0..grid_width {
         // Top wall
         commands.spawn((
-            MaterialMesh2dBundle {
+            Mesh2dBundle {
                 mesh: wall_mesh.clone().into(),
                 material: wall_material.clone(),
                 transform: Transform::from_xyz(
@@ -221,7 +229,7 @@ fn setup_level_boundaries(
         
         // Bottom wall
         commands.spawn((
-            MaterialMesh2dBundle {
+            Mesh2dBundle {
                 mesh: wall_mesh.clone().into(),
                 material: wall_material.clone(),
                 transform: Transform::from_xyz(
@@ -244,7 +252,7 @@ fn setup_level_boundaries(
     for y in 1..(grid_height - 1) {
         // Left wall
         commands.spawn((
-            MaterialMesh2dBundle {
+            Mesh2dBundle {
                 mesh: wall_mesh.clone().into(),
                 material: wall_material.clone(),
                 transform: Transform::from_xyz(
@@ -264,7 +272,7 @@ fn setup_level_boundaries(
         
         // Right wall
         commands.spawn((
-            MaterialMesh2dBundle {
+            Mesh2dBundle {
                 mesh: wall_mesh.clone().into(),
                 material: wall_material.clone(),
                 transform: Transform::from_xyz(
@@ -298,6 +306,9 @@ fn get_wall_color_for_theme(theme: &LevelTheme) -> Color {
         LevelTheme::Space => Color::srgb(0.3, 0.3, 0.4), // Metallic gray
         LevelTheme::NeonCity => Color::srgb(0.8, 0.0, 0.8), // Neon purple
         LevelTheme::FinalBoss => Color::srgb(0.5, 0.0, 0.0), // Ominous red
+        LevelTheme::Cyber => Color::srgb(0.0, 1.0, 0.0), // Matrix green
+        LevelTheme::Shadow => Color::srgb(0.2, 0.1, 0.3), // Dark purple
+        LevelTheme::Cosmic => Color::srgb(0.1, 0.1, 0.2), // Deep space blue
     }
 }
 
@@ -341,9 +352,9 @@ fn setup_basic_obstacles(
     let mut rng = thread_rng();
     let wall_color = get_wall_color_for_theme(&level_def.theme);
     let wall_material = materials.add(ColorMaterial::from(wall_color));
-    let wall_mesh = meshes.add(Mesh::from(shape::Quad::new(Vec2::new(
+    let wall_mesh = meshes.add(Mesh::from(Rectangle::new(
         crate::GRID_SIZE, crate::GRID_SIZE
-    ))));
+    )));
     
     // Place random obstacles (about 5-10% of grid)
     let obstacle_count = (grid_width * grid_height / 15) as usize;
@@ -353,7 +364,7 @@ fn setup_basic_obstacles(
         let y = rng.gen_range(3..(grid_height - 3));
         
         commands.spawn((
-            MaterialMesh2dBundle {
+            Mesh2dBundle {
                 mesh: wall_mesh.clone().into(),
                 material: wall_material.clone(),
                 transform: Transform::from_xyz(
@@ -385,16 +396,16 @@ fn setup_maze_pattern(
     let (grid_width, grid_height) = level_def.grid_size;
     let wall_color = get_wall_color_for_theme(&level_def.theme);
     let wall_material = materials.add(ColorMaterial::from(wall_color));
-    let wall_mesh = meshes.add(Mesh::from(shape::Quad::new(Vec2::new(
+    let wall_mesh = meshes.add(Mesh::from(Rectangle::new(
         crate::GRID_SIZE, crate::GRID_SIZE
-    ))));
+    )));
     
     // Simple maze pattern - create corridors
     for x in (4..grid_width - 4).step_by(4) {
         for y in 2..(grid_height - 2) {
             if y % 4 != 0 { // Leave gaps for corridors
                 commands.spawn((
-                    MaterialMesh2dBundle {
+                    Mesh2dBundle {
                         mesh: wall_mesh.clone().into(),
                         material: wall_material.clone(),
                         transform: Transform::from_xyz(
@@ -427,9 +438,9 @@ fn setup_moving_walls(
     // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
     let wall_color = Color::srgb(0.8, 0.4, 0.0); // Orange for moving walls
     let wall_material = materials.add(ColorMaterial::from(wall_color));
-    let wall_mesh = meshes.add(Mesh::from(shape::Quad::new(Vec2::new(
+    let wall_mesh = meshes.add(Mesh::from(Rectangle::new(
         crate::GRID_SIZE, crate::GRID_SIZE
-    ))));
+    )));
     
     // Create a few moving walls
     for i in 0..3 {
@@ -437,7 +448,7 @@ fn setup_moving_walls(
         let y = grid_height / 2;
         
         commands.spawn((
-            MaterialMesh2dBundle {
+            Mesh2dBundle {
                 mesh: wall_mesh.clone().into(),
                 material: wall_material.clone(),
                 transform: Transform::from_xyz(
@@ -475,9 +486,9 @@ fn setup_breakable_walls(
     // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
     let wall_color = Color::srgb(0.6, 0.4, 0.2); // Brown for breakable walls
     let wall_material = materials.add(ColorMaterial::from(wall_color));
-    let wall_mesh = meshes.add(Mesh::from(shape::Quad::new(Vec2::new(
+    let wall_mesh = meshes.add(Mesh::from(Rectangle::new(
         crate::GRID_SIZE, crate::GRID_SIZE
-    ))));
+    )));
     
     // Create clusters of breakable walls
     let mut rng = thread_rng();
@@ -493,7 +504,7 @@ fn setup_breakable_walls(
                     let y = (center_y as i32 + dy) as u32;
                     
                     commands.spawn((
-                        MaterialMesh2dBundle {
+                        Mesh2dBundle {
                             mesh: wall_mesh.clone().into(),
                             material: wall_material.clone(),
                             transform: Transform::from_xyz(
@@ -526,9 +537,9 @@ fn setup_multi_room_layout(
     let (grid_width, grid_height) = level_def.grid_size;
     let wall_color = get_wall_color_for_theme(&level_def.theme);
     let wall_material = materials.add(ColorMaterial::from(wall_color));
-    let wall_mesh = meshes.add(Mesh::from(shape::Quad::new(Vec2::new(
+    let wall_mesh = meshes.add(Mesh::from(Rectangle::new(
         crate::GRID_SIZE, crate::GRID_SIZE
-    ))));
+    )));
     
     // Divide the level into 4 rooms with connecting passages
     let mid_x = grid_width / 2;
@@ -538,7 +549,7 @@ fn setup_multi_room_layout(
     for y in 2..(grid_height - 2) {
         if y != mid_y - 1 && y != mid_y && y != mid_y + 1 { // Leave passage
             commands.spawn((
-                MaterialMesh2dBundle {
+                Mesh2dBundle {
                     mesh: wall_mesh.clone().into(),
                     material: wall_material.clone(),
                     transform: Transform::from_xyz(
@@ -562,7 +573,7 @@ fn setup_multi_room_layout(
     for x in 2..(grid_width - 2) {
         if x != mid_x - 1 && x != mid_x && x != mid_x + 1 { // Leave passage
             commands.spawn((
-                MaterialMesh2dBundle {
+                Mesh2dBundle {
                     mesh: wall_mesh.clone().into(),
                     material: wall_material.clone(),
                     transform: Transform::from_xyz(
