@@ -58,21 +58,22 @@ pub enum CutsceneState {
 }
 
 /// === Game Transition Events ===
-/// Note: This is a CUSTOM event, different from Bevy's StateTransitionEvent<S>
+/// IMPORTANT: This is our CUSTOM StateTransitionEvent, not Bevy's StateTransitionEvent<S>
+/// Use this throughout the project instead of bevy::prelude::StateTransitionEvent
 #[derive(Event, Debug, Clone)]
 pub enum StateTransitionEvent {
     ToHomeScreen,
     ToCharacterSelect,
-    StartGame { character_id: u32, level: u32 },
+    ToSettings,
+    ToCredits,
+    StartGame { character_id: u32 },
+    LevelComplete { score: u32, level: u32 },
+    GameOver { final_score: u32 },
     PauseGame,
     ResumeGame,
-    GameOver { final_score: u32 },
-    LevelComplete { score: u32, level: u32 },
     StartCutscene { cutscene_type: CutsceneState },
     EndCutscene,
-    ToSettings,
     FromSettings,
-    ToCredits,
     RestartLevel,
     QuitToMenu,
 }
@@ -131,10 +132,10 @@ pub fn handle_state_transitions(
                 game_state.set(GameState::CharacterSelect);
                 character_state.set(CharacterSelectState::Overview);
             }
-            StateTransitionEvent::StartGame { character_id, level } => {
+            StateTransitionEvent::StartGame { character_id } => {
                 progression.selected_character = *character_id;
-                progression.current_level = *level;
-                progression.is_new_game = *level == 1;
+                progression.current_level = 1; // Always start at level 1 for new games
+                progression.is_new_game = true;
                 game_state.set(GameState::Loading);
                 pause_state.set(PauseState::Unpaused);
             }
