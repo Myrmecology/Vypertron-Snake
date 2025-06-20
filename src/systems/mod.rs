@@ -7,7 +7,7 @@
 use bevy::prelude::*;
 use crate::components::*;
 use crate::resources::*;
-use crate::states::*;
+use crate::states::{StateTransitionEvent, GameState, PauseState, CutsceneState}; // FIXED: Explicit imports to avoid ambiguity
 use crate::utils::*;
 use crate::audio::*;
 use rand::prelude::*;
@@ -296,7 +296,7 @@ fn create_title_snake(
     
     // Create title snake entity
     commands.spawn((
-        MaterialMesh2dBundle {
+        ColorMesh2dBundle { // FIXED: MaterialMesh2dBundle -> ColorMesh2dBundle
             mesh: segment_mesh.into(),
             material: snake_material,
             transform: Transform::from_xyz(path_points[0].x, path_points[0].y, 1.0),
@@ -326,7 +326,7 @@ fn spawn_menu_button(
     
     // Button background
     let _button_entity = commands.spawn((
-        MaterialMesh2dBundle {
+        ColorMesh2dBundle { // FIXED: MaterialMesh2dBundle -> ColorMesh2dBundle
             mesh: button_mesh.into(),
             material: button_material,
             transform: Transform::from_xyz(position.x, position.y, 2.0),
@@ -637,7 +637,7 @@ fn create_character_card(
     
     // Card background
     commands.spawn((
-        MaterialMesh2dBundle {
+        ColorMesh2dBundle { // FIXED: MaterialMesh2dBundle -> ColorMesh2dBundle
             mesh: card_mesh.into(),
             material: card_material,
             transform: Transform::from_xyz(position.x, position.y, 1.0),
@@ -873,15 +873,15 @@ pub fn update_animations(
             };
             let _eased_progress = AnimationUtils::apply_easing(progress, &easing_type);
             
+            // FIXED: Handle fade out visibility change without conflicting borrows
+            let should_hide = matches!(animation.animation_type, UIAnimationType::FadeOut) && progress >= 1.0;
+            
             match animation.animation_type {
                 UIAnimationType::FadeIn => {
                     // Apply fade in effect - would need access to text color
                 },
                 UIAnimationType::FadeOut => {
-                    // Apply fade out effect
-                    if progress >= 1.0 {
-                        ui_element.is_visible = false;
-                    }
+                    // Apply fade out effect - visibility handled below
                 },
                 UIAnimationType::Pulse => {
                     // Pulsing effect - handled by individual systems
@@ -895,6 +895,11 @@ pub fn update_animations(
                 UIAnimationType::Slide => {
                     // Sliding animation
                 },
+            }
+            
+            // FIXED: Set visibility after animation reference is dropped
+            if should_hide {
+                ui_element.is_visible = false;
             }
             
             // Reset looping animations
