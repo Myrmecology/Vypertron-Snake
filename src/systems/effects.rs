@@ -9,6 +9,7 @@
 //! - Particle system management and cleanup
 
 use bevy::prelude::*;
+use bevy::sprite::MaterialMesh2dBundle;
 use crate::components::*;
 use crate::resources::*;
 use crate::states::StateTransitionEvent as CustomStateTransitionEvent;
@@ -231,7 +232,7 @@ fn create_explosion_effect(
     let explosion_mesh = meshes.add(Mesh::from(Circle::new(explosion_size * 0.5)));
     
     commands.spawn((
-        MaterialMeshBundle {
+        MaterialMesh2dBundle {
             mesh: explosion_mesh.into(),
             material: explosion_material,
             transform: Transform::from_xyz(world_pos.x, world_pos.y, 20.0),
@@ -278,7 +279,7 @@ fn create_shockwave_rings(
         let ring_mesh = meshes.add(Mesh::from(Circle::new(crate::GRID_SIZE * 0.2)));
         
         commands.spawn((
-            MaterialMeshBundle {
+            MaterialMesh2dBundle {
                 mesh: ring_mesh.into(),
                 material: ring_material,
                 transform: Transform::from_xyz(position.x, position.y, 18.0 - i as f32),
@@ -375,7 +376,7 @@ fn spawn_particle_system(
         let particle_srgba = particle_color.to_srgba();
         
         commands.spawn((
-            MaterialMeshBundle {
+            MaterialMesh2dBundle {
                 mesh: particle_mesh.into(),
                 material: particle_material,
                 transform: Transform::from_xyz(
