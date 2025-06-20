@@ -7,7 +7,7 @@
 //! - Cross-platform audio support (desktop + web)
 
 use bevy::prelude::*;
-use bevy::audio::{Audio, AudioSink, AudioSinkPlayback, Volume};
+use bevy::audio::{AudioSink, AudioSinkPlayback, Volume};
 use crate::resources::*;
 use crate::states::*;
 use std::collections::HashMap;
@@ -468,21 +468,17 @@ pub fn initialize_audio_system(
 
 /// Start background music when entering home screen
 pub fn start_background_music(
-    _commands: Commands,
+    mut commands: Commands,
     audio_manager: Res<AudioManager>,
-    audio: Res<Audio>,
 ) {
     if let Some(music_handle) = audio_manager.loaded_sounds.get("background_music") {
         info!("Starting background music: snakesong.mp3");
         
-        // FIXED: Changed Volume::new_relative to Volume::new for Bevy 0.14
-        let _sink = audio.play_with_settings(
-            music_handle.clone(),
-            PlaybackSettings::LOOP.with_volume(Volume::new(audio_manager.music_volume)),
-        );
-        
-        // Store sink in resource for later control
-        // Note: In a real implementation, we'd need to properly manage the sink
+        // FIXED: Use commands.spawn with AudioBundle for Bevy 0.14
+        commands.spawn(AudioBundle {
+            source: music_handle.clone(),
+            settings: PlaybackSettings::LOOP.with_volume(Volume::new(audio_manager.music_volume)),
+        });
     }
 }
 
@@ -511,18 +507,19 @@ pub fn play_victory_music(
 
 /// Handle audio events
 pub fn handle_audio_events(
+    mut commands: Commands,
     mut play_events: EventReader<PlaySoundEvent>,
     mut stop_events: EventReader<StopSoundEvent>,
     mut volume_events: EventReader<SetVolumeEvent>,
     mut audio_manager: ResMut<AudioManager>,
-    _audio: Res<Audio>,
 ) {
     // Handle play sound events
     for event in play_events.read() {
         if let Some(_audio_data) = audio_manager.procedural_sounds.get(&event.sound_id) {
             info!("Playing procedural sound: {}", event.sound_id);
             // In a real implementation, we'd convert the Vec<f32> to an AudioSource
-            // and play it with the specified volume and pitch
+            // and play it with the specified volume and pitch using commands.spawn
+            // For now, we'll just log that the sound would be played
         }
     }
     
