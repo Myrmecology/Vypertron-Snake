@@ -15,8 +15,8 @@ pub use game_timer::GameTimer;
 // CORE GAME RESOURCES
 // ===============================
 
-/// ADDED: Missing SnakeDirection enum that was referenced in errors
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect, Serialize, Deserialize)]
+/// FIXED: Added Resource derive to SnakeDirection
+#[derive(Resource, Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect, Serialize, Deserialize)]
 pub enum SnakeDirection {
     Up,
     Down,
@@ -290,6 +290,7 @@ pub enum SpecialMechanic {
 #[derive(Resource, Debug, Clone, Serialize, Deserialize, Reflect)]
 pub struct CharacterSelection {
     pub selected_character: u32,
+    pub selected_character_id: u32, // ADDED: This field was referenced in errors
     pub characters: [CharacterDefinition; 4],
     pub unlocked_characters: [bool; 4],
 }
@@ -298,6 +299,7 @@ impl Default for CharacterSelection {
     fn default() -> Self {
         Self {
             selected_character: 1,
+            selected_character_id: 1, // ADDED: Initialize to match selected_character
             characters: [
                 CharacterDefinition {
                     id: 1,
