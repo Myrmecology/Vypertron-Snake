@@ -292,7 +292,7 @@ fn create_title_snake(
     ];
     
     let snake_material = materials.add(ColorMaterial::from(Color::srgb(0.0, 0.8, 0.0))); // FIXED: rgb -> srgb
-    let segment_mesh = meshes.add(Mesh::from(shape::Quad::new(Vec2::new(16.0, 16.0))));
+    let segment_mesh = meshes.add(Mesh::from(Rectangle::new(16.0, 16.0))); // FIXED: shape::Quad -> Rectangle
     
     // Create title snake entity
     commands.spawn((
@@ -322,7 +322,7 @@ fn spawn_menu_button(
     materials: &mut Assets<ColorMaterial>,
 ) {
     let button_material = materials.add(ColorMaterial::from(Color::srgb(0.2, 0.2, 0.3))); // FIXED: rgb -> srgb
-    let button_mesh = meshes.add(Mesh::from(shape::Quad::new(Vec2::new(180.0, 50.0))));
+    let button_mesh = meshes.add(Mesh::from(Rectangle::new(180.0, 50.0))); // FIXED: shape::Quad -> Rectangle
     
     // Button background
     let _button_entity = commands.spawn((
@@ -633,7 +633,7 @@ fn create_character_card(
     };
     
     let card_material = materials.add(ColorMaterial::from(card_color));
-    let card_mesh = meshes.add(Mesh::from(shape::Quad::new(Vec2::new(200.0, 300.0))));
+    let card_mesh = meshes.add(Mesh::from(Rectangle::new(200.0, 300.0))); // FIXED: shape::Quad -> Rectangle
     
     // Card background
     commands.spawn((
