@@ -81,7 +81,7 @@ pub fn check_food_collision(
     mut score_resource: ResMut<ScoreResource>,
     mut play_sound_events: EventWriter<PlaySoundEvent>,
     level_manager: Res<LevelManager>,
-    character_selection: Res<CharacterSelection>,
+    _character_selection: Res<CharacterSelection>, // FIXED: Added underscore prefix for unused parameter
 ) {
     for (snake_entity, snake_pos, snake) in snake_query.iter() {
         if !snake.is_alive {
@@ -297,7 +297,7 @@ pub fn check_self_collision(
     mut state_events: EventWriter<StateTransitionEvent>,
     score_resource: Res<ScoreResource>,
 ) {
-    for (snake_entity, snake_pos, snake) in snake_query.iter() {
+    for (_snake_entity, snake_pos, snake) in snake_query.iter() { // FIXED: Added underscore prefix for unused variable
         if !snake.is_alive {
             continue;
         }
@@ -322,7 +322,7 @@ pub fn check_self_collision(
                 
                 // Send collision event
                 self_collision_events.send(SelfCollisionEvent {
-                    snake_entity,
+                    snake_entity: _snake_entity,
                     collision_position: collision_pos,
                     segment_index: segment.segment_index,
                 });
@@ -353,7 +353,7 @@ pub fn check_self_collision(
 /// Check for collisions with special objects (teleporters, power-ups, etc.)
 pub fn check_special_collisions(
     mut _commands: Commands, // FIXED: Added underscore prefix
-    snake_query: Query<(Entity, &mut GridPosition, &Snake), With<Snake>>,
+    mut snake_query: Query<(Entity, &mut GridPosition, &Snake), With<Snake>>, // FIXED: Added mut to the query parameter
     teleporter_query: Query<(Entity, &GridPosition), (With<AudioTrigger>, Without<Snake>)>,
     mut special_collision_events: EventWriter<SpecialCollisionEvent>,
     mut play_sound_events: EventWriter<PlaySoundEvent>,
@@ -522,6 +522,7 @@ pub fn update_invincibility_effects(
             info!("Invincibility effect expired");
         } else {
             // Flashing effect
+            let _alpha = if effect.remaining_time > 0.0 { 1.0 } else { 0.3 }; // FIXED: Added underscore prefix for unused variable
             let flash = (effect.remaining_time * 10.0).sin() * 0.2 + 0.8;
             transform.scale = Vec3::splat(flash);
         }
@@ -583,7 +584,7 @@ fn create_food_pickup_effect(
     let effect_mesh = meshes.add(Circle::new(crate::GRID_SIZE * 0.3));
     
     commands.spawn((
-        MaterialMesh2dBundle {
+        ColorMesh2dBundle { // FIXED: MaterialMesh2dBundle -> ColorMesh2dBundle
             mesh: effect_mesh.into(),
             material: effect_material,
             transform: Transform::from_xyz(
@@ -616,7 +617,7 @@ fn create_wall_break_effect(
     let effect_mesh = meshes.add(Circle::new(crate::GRID_SIZE * 0.5));
     
     commands.spawn((
-        MaterialMesh2dBundle {
+        ColorMesh2dBundle { // FIXED: MaterialMesh2dBundle -> ColorMesh2dBundle
             mesh: effect_mesh.into(),
             material: effect_material,
             transform: Transform::from_xyz(
@@ -649,7 +650,7 @@ fn create_self_collision_effect(
     let effect_mesh = meshes.add(Circle::new(crate::GRID_SIZE * 0.7));
     
     commands.spawn((
-        MaterialMesh2dBundle {
+        ColorMesh2dBundle { // FIXED: MaterialMesh2dBundle -> ColorMesh2dBundle
             mesh: effect_mesh.into(),
             material: effect_material,
             transform: Transform::from_xyz(
@@ -682,7 +683,7 @@ fn create_teleport_effect(
     let effect_mesh = meshes.add(Circle::new(crate::GRID_SIZE * 0.6));
     
     commands.spawn((
-        MaterialMesh2dBundle {
+        ColorMesh2dBundle { // FIXED: MaterialMesh2dBundle -> ColorMesh2dBundle
             mesh: effect_mesh.into(),
             material: effect_material,
             transform: Transform::from_xyz(
