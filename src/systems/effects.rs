@@ -11,7 +11,7 @@
 use bevy::prelude::*;
 use crate::components::*;
 use crate::resources::*;
-use crate::states::*;
+use crate::states::StateTransitionEvent as CustomStateTransitionEvent;
 use crate::utils::*;
 use crate::audio::*;
 use crate::systems::snake::*;
@@ -212,7 +212,7 @@ fn create_explosion_effect(
     let world_pos = MathUtils::grid_to_world(explosion_event.position, crate::GRID_SIZE);
     
     // Main explosion circle
-    /// FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
+    // FIXED: Changed Color::rgb to Color::srgb for Bevy 0.14
     let explosion_color = explosion_event.character_color.unwrap_or(match explosion_event.explosion_type {
         ExplosionType::Death => Color::srgb(1.0, 0.2, 0.0),
         ExplosionType::FoodPickup => Color::srgb(1.0, 1.0, 0.2),
@@ -228,10 +228,10 @@ fn create_explosion_effect(
         ExplosionType::Victory => crate::GRID_SIZE * 3.0,
     };
     
-    let explosion_mesh = meshes.add(Mesh::from(shape::Circle::new(explosion_size * 0.5)));
+    let explosion_mesh = meshes.add(Mesh::from(Circle::new(explosion_size * 0.5)));
     
     commands.spawn((
-        MaterialMesh2dBundle {
+        Mesh2dBundle {
             mesh: explosion_mesh.into(),
             material: explosion_material,
             transform: Transform::from_xyz(world_pos.x, world_pos.y, 20.0),
@@ -275,10 +275,10 @@ fn create_shockwave_rings(
         let color_srgba = color.to_srgba();
         let ring_color = Color::srgba(color_srgba.red, color_srgba.green, color_srgba.blue, 0.6 - i as f32 * 0.2);
         let ring_material = materials.add(ColorMaterial::from(ring_color));
-        let ring_mesh = meshes.add(Mesh::from(shape::Circle::new(crate::GRID_SIZE * 0.2)));
+        let ring_mesh = meshes.add(Mesh::from(Circle::new(crate::GRID_SIZE * 0.2)));
         
         commands.spawn((
-            MaterialMesh2dBundle {
+            Mesh2dBundle {
                 mesh: ring_mesh.into(),
                 material: ring_material,
                 transform: Transform::from_xyz(position.x, position.y, 18.0 - i as f32),
@@ -353,7 +353,7 @@ fn spawn_particle_system(
             ParticleType::Debris => rng.gen_range(3.0..8.0),
         };
         
-        let particle_mesh = meshes.add(Mesh::from(shape::Circle::new(particle_size)));
+        let particle_mesh = meshes.add(Mesh::from(Circle::new(particle_size)));
         
         // Random velocity within range
         let velocity_magnitude = rng.gen_range(
@@ -375,7 +375,7 @@ fn spawn_particle_system(
         let particle_srgba = particle_color.to_srgba();
         
         commands.spawn((
-            MaterialMesh2dBundle {
+            Mesh2dBundle {
                 mesh: particle_mesh.into(),
                 material: particle_material,
                 transform: Transform::from_xyz(
@@ -592,12 +592,12 @@ pub fn create_victory_effects(
     mut commands: Commands,
     mut _explosion_events: EventWriter<ExplosionEvent>,
     mut particle_events: EventWriter<ParticleEvent>,
-    mut level_complete_events: EventReader<StateTransitionEvent>,
+    mut level_complete_events: EventReader<CustomStateTransitionEvent>,
     _level_manager: Res<LevelManager>,
     character_selection: Res<CharacterSelection>,
 ) {
     for event in level_complete_events.read() {
-        if let StateTransitionEvent::LevelComplete { score: _, level } = event {
+        if let CustomStateTransitionEvent::LevelComplete { score: _, level } = event {
             let character_color = ColorUtils::get_character_color(character_selection.selected_character);
             
             info!("Creating victory effects for level {}", level);
