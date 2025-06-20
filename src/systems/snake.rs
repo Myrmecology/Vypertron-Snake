@@ -53,7 +53,7 @@ pub fn spawn_snake(
     
     // Spawn snake head
     let snake_entity = commands.spawn((
-        MaterialMesh2dBundle {
+        ColorMesh2dBundle { // FIXED: MaterialMesh2dBundle -> ColorMesh2dBundle
             mesh: segment_mesh.clone().into(),
             material: snake_material.clone(),
             transform: Transform::from_xyz(
@@ -115,7 +115,7 @@ fn spawn_initial_segments(
         let segment_pos = Vec2::new(head_position.x - i as f32, head_position.y);
         
         commands.spawn((
-            MaterialMesh2dBundle {
+            ColorMesh2dBundle { // FIXED: MaterialMesh2dBundle -> ColorMesh2dBundle
                 mesh: mesh.clone().into(),
                 material: material.clone(),
                 transform: Transform::from_xyz(
@@ -160,9 +160,9 @@ pub fn move_snake(
     level_manager: Res<LevelManager>,
     character_selection: Res<CharacterSelection>,
     mut play_sound_events: EventWriter<PlaySoundEvent>,
-    mut state_events: EventWriter<StateTransitionEvent>,
+    mut _state_events: EventWriter<StateTransitionEvent>, // FIXED: Added underscore prefix for unused parameter
 ) {
-    for (snake_entity, mut snake, mut snake_transform, mut snake_grid_pos) in snake_query.iter_mut() {
+    for (_snake_entity, mut snake, mut snake_transform, mut snake_grid_pos) in snake_query.iter_mut() { // FIXED: Added underscore prefix for unused variable
         if !snake.is_alive {
             continue;
         }
@@ -181,7 +181,7 @@ pub fn move_snake(
             let previous_positions = collect_segment_positions(&segment_query);
             
             // Calculate new head position
-            let current_pos = snake_grid_pos.to_world_position(crate::GRID_SIZE);
+            let _current_pos = snake_grid_pos.to_world_position(crate::GRID_SIZE); // FIXED: Added underscore prefix for unused variable
             let new_grid_pos = Vec2::new(
                 snake_grid_pos.x as f32 + snake.direction.x,
                 snake_grid_pos.y as f32 + snake.direction.y,
@@ -284,7 +284,7 @@ fn update_snake_segments(
     position_chain.extend_from_slice(previous_positions);
     
     // Update each segment to follow the position chain
-    for (mut segment, mut transform, mut grid_pos, mut smooth_movement) in segment_query.iter_mut() {
+    for (mut segment, mut _transform, mut grid_pos, mut smooth_movement) in segment_query.iter_mut() { // FIXED: Added underscore prefix for unused variable
         let segment_index = segment.segment_index as usize;
         
         if segment_index < position_chain.len() && segment_index < snake_length as usize {
@@ -296,7 +296,7 @@ fn update_snake_segments(
             segment.grid_position = new_pos;
             
             // Start smooth movement animation
-            smooth_movement.start_position = Vec2::new(transform.translation.x, transform.translation.y);
+            smooth_movement.start_position = Vec2::new(_transform.translation.x, _transform.translation.y);
             smooth_movement.target_position = MathUtils::grid_to_world(new_pos, crate::GRID_SIZE);
             smooth_movement.progress = 0.0;
             
@@ -454,7 +454,7 @@ fn spawn_new_segment(
     segment_index: u32,
     meshes: &mut Assets<Mesh>,
     materials: &mut Assets<ColorMaterial>,
-    character_selection: &CharacterSelection,
+    _character_selection: &CharacterSelection, // FIXED: Added underscore prefix for unused parameter
     character_id: u32,
 ) {
     let character_color = ColorUtils::get_character_color(character_id);
@@ -467,7 +467,7 @@ fn spawn_new_segment(
     ));
     
     commands.spawn((
-        MaterialMesh2dBundle {
+        ColorMesh2dBundle { // FIXED: MaterialMesh2dBundle -> ColorMesh2dBundle
             mesh: segment_mesh.into(),
             material: segment_material,
             transform: Transform::from_xyz(
@@ -613,7 +613,7 @@ pub fn update_snake_trail(
                 ));
                 
                 commands.spawn((
-                    MaterialMesh2dBundle {
+                    ColorMesh2dBundle { // FIXED: MaterialMesh2dBundle -> ColorMesh2dBundle
                         mesh: trail_mesh.into(),
                         material: trail_material,
                         transform: Transform::from_xyz(
