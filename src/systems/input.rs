@@ -478,8 +478,8 @@ pub fn consume_buffered_input(
         for mut snake in snake_query.iter_mut() {
             snake.direction = direction;
             
-            // FIXED: Update global direction resource with double dereference
-            **snake_direction = if direction.x > 0.0 {
+            // FIXED: Update global direction resource with single dereference
+            *snake_direction = if direction.x > 0.0 {
                 SnakeDirection::Right
             } else if direction.x < 0.0 {
                 SnakeDirection::Left
@@ -489,8 +489,8 @@ pub fn consume_buffered_input(
                 SnakeDirection::Down
             };
             
-            // FIXED: Use double dereference for logging
-            info!("Snake direction updated: {:?}", **snake_direction);
+            // FIXED: Use single dereference for logging
+            info!("Snake direction updated: {:?}", *snake_direction);
         }
         
         // Remove consumed input
