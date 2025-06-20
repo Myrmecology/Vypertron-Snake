@@ -321,7 +321,7 @@ fn update_input_buffer(_time: &Res<Time>, input_buffer: &mut ResMut<InputBuffer>
 }
 
 /// Handle pause menu input
-fn handle_pause_menu_input(
+pub fn handle_pause_menu_input( // FIXED: Added pub
     keyboard_input: &Res<ButtonInput<KeyCode>>, // FIXED
     game_settings: &Res<GameSettings>,
     state_events: &mut EventWriter<StateTransitionEvent>,
@@ -348,7 +348,7 @@ fn handle_pause_menu_input(
 }
 
 /// Handle game over screen input
-fn handle_game_over_input(
+pub fn handle_game_over_input( // FIXED: Added pub
     keyboard_input: &Res<ButtonInput<KeyCode>>, // FIXED
     game_settings: &Res<GameSettings>,
     state_events: &mut EventWriter<StateTransitionEvent>,
@@ -376,7 +376,7 @@ fn handle_game_over_input(
 }
 
 /// Handle level complete screen input
-fn handle_level_complete_input(
+pub fn handle_level_complete_input( // FIXED: Added pub
     keyboard_input: &Res<ButtonInput<KeyCode>>, // FIXED
     game_settings: &Res<GameSettings>,
     state_events: &mut EventWriter<StateTransitionEvent>,
@@ -405,7 +405,7 @@ fn handle_level_complete_input(
 }
 
 /// Handle cutscene input
-fn handle_cutscene_input(
+pub fn handle_cutscene_input( // FIXED: Added pub
     keyboard_input: &Res<ButtonInput<KeyCode>>, // FIXED
     game_settings: &Res<GameSettings>,
     state_events: &mut EventWriter<StateTransitionEvent>,
@@ -426,7 +426,7 @@ fn handle_cutscene_input(
 }
 
 /// Handle settings menu input
-fn handle_settings_input(
+pub fn handle_settings_input( // FIXED: Added pub
     keyboard_input: &Res<ButtonInput<KeyCode>>, // FIXED
     game_settings: &Res<GameSettings>,
     state_events: &mut EventWriter<StateTransitionEvent>,
@@ -450,7 +450,7 @@ fn handle_settings_input(
 }
 
 /// Handle credits screen input
-fn handle_credits_input(
+pub fn handle_credits_input( // FIXED: Added pub
     keyboard_input: &Res<ButtonInput<KeyCode>>, // FIXED
     _game_settings: &Res<GameSettings>,
     state_events: &mut EventWriter<StateTransitionEvent>,
