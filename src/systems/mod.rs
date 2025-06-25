@@ -850,62 +850,72 @@ pub fn handle_window_resize(
 // GLOBAL ANIMATION SYSTEM
 // ===============================
 
-/// Update all UI animations
+/// FIXED: Update all UI animations without borrowing conflicts
 pub fn update_animations(
     time: Res<Time>,
     mut query: Query<(&mut Style, &mut UIElement), With<UIElement>>,
     _text_query: Query<&mut Text>,
 ) {
     for (_style, mut ui_element) in query.iter_mut() {
-        if let Some(ref mut animation) = ui_element.animation {
-            animation.timer += time.delta_seconds();
-            
+        // First, collect all the information we need from animation
+        let (should_update_timer, should_reset_timer, should_hide) = if let Some(ref animation) = ui_element.animation {
             let progress = (animation.timer / animation.duration).min(1.0);
-            
-            // FIXED: Convert UIAnimationType to EasingType or handle appropriately
-            let easing_type = match animation.animation_type {
-                UIAnimationType::FadeIn => EasingType::EaseInOut,
-                UIAnimationType::FadeOut => EasingType::EaseInOut,
-                UIAnimationType::Pulse => EasingType::EaseInOut,
-                UIAnimationType::Bounce => EasingType::Bounce,
-                UIAnimationType::Shake => EasingType::EaseInOut,
-                UIAnimationType::Slide => EasingType::EaseInOut,
-            };
-            let _eased_progress = AnimationUtils::apply_easing(progress, &easing_type);
-            
-            // FIXED: Handle fade out visibility change without conflicting borrows
             let should_hide = matches!(animation.animation_type, UIAnimationType::FadeOut) && progress >= 1.0;
-            
-            match animation.animation_type {
-                UIAnimationType::FadeIn => {
-                    // Apply fade in effect - would need access to text color
-                },
-                UIAnimationType::FadeOut => {
-                    // Apply fade out effect - visibility handled below
-                },
-                UIAnimationType::Pulse => {
-                    // Pulsing effect - handled by individual systems
-                },
-                UIAnimationType::Bounce => {
-                    // Bouncing effect
-                },
-                UIAnimationType::Shake => {
-                    // Screen shake effect
-                },
-                UIAnimationType::Slide => {
-                    // Sliding animation
-                },
+            let should_reset = animation.loops && progress >= 1.0;
+            (true, should_reset, should_hide)
+        } else {
+            (false, false, false)
+        };
+        
+        // Now apply the changes without conflicting borrows
+        if should_update_timer {
+            if let Some(ref mut animation) = ui_element.animation {
+                animation.timer += time.delta_seconds();
+                
+                let progress = (animation.timer / animation.duration).min(1.0);
+                
+                // Convert UIAnimationType to EasingType or handle appropriately
+                let easing_type = match animation.animation_type {
+                    UIAnimationType::FadeIn => EasingType::EaseInOut,
+                    UIAnimationType::FadeOut => EasingType::EaseInOut,
+                    UIAnimationType::Pulse => EasingType::EaseInOut,
+                    UIAnimationType::Bounce => EasingType::Bounce,
+                    UIAnimationType::Shake => EasingType::EaseInOut,
+                    UIAnimationType::Slide => EasingType::EaseInOut,
+                };
+                let _eased_progress = AnimationUtils::apply_easing(progress, &easing_type);
+                
+                match animation.animation_type {
+                    UIAnimationType::FadeIn => {
+                        // Apply fade in effect - would need access to text color
+                    },
+                    UIAnimationType::FadeOut => {
+                        // Apply fade out effect - visibility handled below
+                    },
+                    UIAnimationType::Pulse => {
+                        // Pulsing effect - handled by individual systems
+                    },
+                    UIAnimationType::Bounce => {
+                        // Bouncing effect
+                    },
+                    UIAnimationType::Shake => {
+                        // Screen shake effect
+                    },
+                    UIAnimationType::Slide => {
+                        // Sliding animation
+                    },
+                }
+                
+                // Reset looping animations
+                if should_reset_timer {
+                    animation.timer = 0.0;
+                }
             }
-            
-            // FIXED: Set visibility after animation reference is dropped
-            if should_hide {
-                ui_element.is_visible = false;
-            }
-            
-            // Reset looping animations
-            if animation.loops && progress >= 1.0 {
-                animation.timer = 0.0;
-            }
+        }
+        
+        // Set visibility without animation borrow
+        if should_hide {
+            ui_element.is_visible = false;
         }
     }
 }
