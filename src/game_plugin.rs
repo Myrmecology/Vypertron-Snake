@@ -235,6 +235,7 @@ impl Plugin for GamePlugin {
                 input_visual_feedback,
                 input_haptic_feedback,
                 accessibility_input,
+                debug_current_state, // ADDED: Debug system to track state changes
             ));
 
         // === Food Systems ===
@@ -258,6 +259,7 @@ impl Plugin for GamePlugin {
                 initialize_food_system,
                 initialize_effects_system,
                 initialize_input_system,
+                force_initial_state,        // ADDED: Ensure we start in correct state
             ).chain());
     }
 }
@@ -502,4 +504,26 @@ fn initialize_food_system() {
 
 fn initialize_effects_system() {
     info!("Initializing effects system...");
+}
+
+// ADDED: Debug system to track state changes
+fn debug_current_state(
+    current_state: Res<State<GameState>>,
+) {
+    static mut LAST_STATE: Option<GameState> = None;
+    
+    unsafe {
+        if LAST_STATE.as_ref() != Some(current_state.get()) {
+            info!("🎮 GAME STATE CHANGED TO: {:?}", current_state.get());
+            LAST_STATE = Some(current_state.get().clone());
+        }
+    }
+}
+
+// ADDED: Force the game to start in HomeScreen state
+fn force_initial_state(
+    mut game_state: ResMut<NextState<GameState>>,
+) {
+    info!("🏠 Forcing initial state to HomeScreen");
+    game_state.set(GameState::HomeScreen);
 }
