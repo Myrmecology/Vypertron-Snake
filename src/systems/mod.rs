@@ -396,8 +396,7 @@ pub fn handle_home_screen_input(
     mouse_input: Res<ButtonInput<MouseButton>>, // FIXED: Input -> ButtonInput
     windows: Query<&Window>,
     camera_query: Query<(&Camera, &GlobalTransform)>,
-    button_query: Query<(Entity, &Transform, &MenuButton)>,
-    mut button_interaction_query: Query<&mut MenuButton>,
+    mut button_query: Query<(Entity, &Transform, &mut MenuButton)>, // FIXED: Combined queries to avoid conflict
     mut state_events: EventWriter<StateTransitionEvent>,
     _game_settings: Res<GameSettings>,
     mut play_sound_events: EventWriter<PlaySoundEvent>,
@@ -417,7 +416,7 @@ pub fn handle_home_screen_input(
                 if let Some(world_pos) = camera.viewport_to_world_2d(camera_transform, cursor_pos) {
                     
                     // Check button hover and clicks
-                    for (entity, transform, button) in button_query.iter() {
+                    for (entity, transform, mut button) in button_query.iter_mut() {
                         let button_bounds = Rect::from_center_size(
                             transform.translation.truncate(),
                             Vec2::new(180.0, 50.0)
@@ -425,38 +424,34 @@ pub fn handle_home_screen_input(
                         
                         if button_bounds.contains(world_pos) {
                             // Button is hovered
-                            if let Ok(mut menu_button) = button_interaction_query.get_mut(entity) {
-                                if menu_button.state != ButtonState::Hovered {
-                                    menu_button.state = ButtonState::Hovered;
-                                    play_sound_events.send(PlaySoundEvent::new("menu_navigate"));
-                                }
+                            if button.state != ButtonState::Hovered {
+                                button.state = ButtonState::Hovered;
+                                play_sound_events.send(PlaySoundEvent::new("menu_navigate"));
+                            }
+                            
+                            // Handle click
+                            if mouse_input.just_pressed(MouseButton::Left) {
+                                button.state = ButtonState::Pressed;
+                                play_sound_events.send(PlaySoundEvent::new("menu_select"));
                                 
-                                // Handle click
-                                if mouse_input.just_pressed(MouseButton::Left) {
-                                    menu_button.state = ButtonState::Pressed;
-                                    play_sound_events.send(PlaySoundEvent::new("menu_select"));
-                                    
-                                    // Execute button action
-                                    match &button.action {
-                                        ButtonAction::StartGame => {
-                                            state_events.send(StateTransitionEvent::ToCharacterSelect); // FIXED: Use correct variant
-                                        },
-                                        ButtonAction::OpenSettings => {
-                                            state_events.send(StateTransitionEvent::ToSettings); // FIXED: Use correct variant
-                                        },
-                                        ButtonAction::ShowCredits => {
-                                            state_events.send(StateTransitionEvent::ToCredits); // FIXED: Use correct variant
-                                        },
-                                        _ => {},
-                                    }
+                                // Execute button action
+                                match &button.action {
+                                    ButtonAction::StartGame => {
+                                        state_events.send(StateTransitionEvent::ToCharacterSelect); // FIXED: Use correct variant
+                                    },
+                                    ButtonAction::OpenSettings => {
+                                        state_events.send(StateTransitionEvent::ToSettings); // FIXED: Use correct variant
+                                    },
+                                    ButtonAction::ShowCredits => {
+                                        state_events.send(StateTransitionEvent::ToCredits); // FIXED: Use correct variant
+                                    },
+                                    _ => {},
                                 }
                             }
                         } else {
                             // Button is not hovered
-                            if let Ok(mut menu_button) = button_interaction_query.get_mut(entity) {
-                                if menu_button.state == ButtonState::Hovered {
-                                    menu_button.state = ButtonState::Normal;
-                                }
+                            if button.state == ButtonState::Hovered {
+                                button.state = ButtonState::Normal;
                             }
                         }
                     }
@@ -701,7 +696,7 @@ pub fn handle_character_selection_input(
     mut character_selection: ResMut<CharacterSelection>,
     character_card_query: Query<(Entity, &Transform, &CharacterCard)>,
     mut character_card_mutation_query: Query<&mut CharacterCard>,
-    button_query: Query<(Entity, &Transform, &MenuButton)>,
+    mut button_query: Query<(Entity, &Transform, &mut MenuButton)>, // FIXED: Combined query
     mut state_events: EventWriter<StateTransitionEvent>,
     mut play_sound_events: EventWriter<PlaySoundEvent>,
 ) {
@@ -761,7 +756,7 @@ pub fn handle_character_selection_input(
                     }
                     
                     // Check button clicks (reuse home screen button logic)
-                    for (_entity, transform, button) in button_query.iter() {
+                    for (_entity, transform, mut button) in button_query.iter_mut() {
                         let button_bounds = Rect::from_center_size(
                             transform.translation.truncate(),
                             Vec2::new(180.0, 50.0)
