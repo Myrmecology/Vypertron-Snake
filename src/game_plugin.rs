@@ -361,16 +361,34 @@ fn setup_settings_screen() {
     info!("Setting up settings screen...");
 }
 
-fn update_settings_ui() {
+// FIXED: Made this a proper Bevy system with parameters
+fn update_settings_ui(
+    time: Res<Time>,
+    mut query: Query<&mut UIElement>,
+) {
     // Settings UI updates
+    for mut ui_element in query.iter_mut() {
+        // Update UI elements as needed
+        if ui_element.animation.is_some() {
+            // Handle UI animations
+        }
+    }
 }
 
 fn setup_credits_screen() {
     info!("Setting up credits screen...");
 }
 
-fn update_credits_scroll() {
+// FIXED: Made this a proper Bevy system with parameters
+fn update_credits_scroll(
+    time: Res<Time>,
+    mut query: Query<&mut Transform, With<UIElement>>,
+) {
     // Credits scrolling logic
+    for mut transform in query.iter_mut() {
+        // Scroll credits upward
+        transform.translation.y += 50.0 * time.delta_seconds();
+    }
 }
 
 fn cleanup_game_level() {
