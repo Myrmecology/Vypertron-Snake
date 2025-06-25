@@ -242,6 +242,7 @@ impl ColorUtils {
     
     /// Get level theme color palette
     /// FIXED: Changed all Color::rgb to Color::srgb for Bevy 0.14
+    /// FIXED: Added missing match arms for Cyber, Shadow, and Cosmic themes
     pub fn get_theme_palette(theme: &LevelTheme) -> ThemeColorPalette {
         match theme {
             LevelTheme::Classic => ThemeColorPalette {
@@ -303,6 +304,25 @@ impl ColorUtils {
                 secondary: Color::srgb(0.3, 0.0, 0.0),
                 accent: Color::srgb(1.0, 0.0, 0.0),
                 background: Color::srgb(0.1, 0.0, 0.0),
+            },
+            // FIXED: Added missing theme variants
+            LevelTheme::Cyber => ThemeColorPalette {
+                primary: Color::srgb(0.0, 1.0, 0.5),
+                secondary: Color::srgb(0.1, 0.1, 0.1),
+                accent: Color::srgb(0.0, 1.0, 1.0),
+                background: Color::srgb(0.0, 0.05, 0.0),
+            },
+            LevelTheme::Shadow => ThemeColorPalette {
+                primary: Color::srgb(0.3, 0.3, 0.4),
+                secondary: Color::srgb(0.1, 0.1, 0.15),
+                accent: Color::srgb(0.6, 0.5, 0.8),
+                background: Color::srgb(0.05, 0.05, 0.1),
+            },
+            LevelTheme::Cosmic => ThemeColorPalette {
+                primary: Color::srgb(0.5, 0.0, 0.8),
+                secondary: Color::srgb(0.2, 0.0, 0.3),
+                accent: Color::srgb(1.0, 0.5, 0.8),
+                background: Color::srgb(0.1, 0.0, 0.2),
             },
         }
     }
