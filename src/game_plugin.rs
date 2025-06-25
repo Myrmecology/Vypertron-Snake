@@ -249,11 +249,11 @@ impl Plugin for GamePlugin {
         #[cfg(debug_assertions)]
         app.add_systems(Update, debug_input);
 
-        // === Startup ===
+        // === Startup - FIXED: Camera MUST be first ===
         app.add_systems(Startup, (
+                setup_camera,               // CAMERA FIRST!
                 load_global_assets,
                 initialize_audio_system,
-                setup_camera,
                 load_saved_data,
                 initialize_food_system,
                 initialize_effects_system,

@@ -303,12 +303,17 @@ fn handle_multiple_food_spawning(
 // FOOD POSITIONING
 // ===============================
 
-/// Collect all occupied grid positions
-fn collect_occupied_positions(
-    snake_query: &Query<&GridPosition, With<Snake>>,
-    segment_query: &Query<&GridPosition, With<SnakeSegment>>,
-    wall_query: &Query<&GridPosition, With<Wall>>,
-) -> Vec<Vec2> {
+/// Collect all occupied grid positions - FIXED: Generic version to handle different query filters
+fn collect_occupied_positions<SF, SEF, WF>(
+    snake_query: &Query<&GridPosition, SF>,
+    segment_query: &Query<&GridPosition, SEF>,
+    wall_query: &Query<&GridPosition, WF>,
+) -> Vec<Vec2> 
+where
+    SF: bevy::ecs::query::QueryFilter,
+    SEF: bevy::ecs::query::QueryFilter,
+    WF: bevy::ecs::query::QueryFilter,
+{
     let mut occupied = Vec::new();
     
     // Add snake positions
@@ -559,14 +564,14 @@ pub fn update_food_expiration(
 // MOVING FOOD SYSTEM
 // ===============================
 
-/// Handle moving food mechanics for certain levels
+/// FIXED: Handle moving food mechanics for certain levels - with disjoint queries
 pub fn update_moving_food(
     time: Res<Time>,
-    mut query: Query<(&mut GridPosition, &mut Transform, &Food), With<Food>>,
+    mut food_query: Query<(&mut GridPosition, &mut Transform, &Food), With<Food>>,
     level_manager: Res<LevelManager>,
-    snake_query: Query<&GridPosition, With<Snake>>,
-    segment_query: Query<&GridPosition, With<SnakeSegment>>,
-    wall_query: Query<&GridPosition, With<Wall>>,
+    snake_query: Query<&GridPosition, (With<Snake>, Without<Food>)>,
+    segment_query: Query<&GridPosition, (With<SnakeSegment>, Without<Food>)>,
+    wall_query: Query<&GridPosition, (With<Wall>, Without<Food>)>,
 ) {
     let level_def = &level_manager.level_definitions[(level_manager.current_level - 1) as usize];
     
@@ -586,7 +591,7 @@ pub fn update_moving_food(
             
             let occupied_positions = collect_occupied_positions(&snake_query, &segment_query, &wall_query);
             
-            for (mut grid_pos, mut transform, food) in query.iter_mut() {
+            for (mut grid_pos, mut transform, food) in food_query.iter_mut() {
                 // Only move certain types of food
                 if matches!(food.food_type, FoodType::Normal | FoodType::Bonus) {
                     // Try to find a new safe position

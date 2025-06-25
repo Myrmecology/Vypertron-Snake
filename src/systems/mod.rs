@@ -16,10 +16,21 @@ use rand::prelude::*;
 // CORE GAME SYSTEMS
 // ===============================
 
-/// Setup the main camera
+/// Setup the main camera - FIXED: Ensure proper camera setup for UI rendering
 pub fn setup_camera(mut commands: Commands) {
     info!("Setting up camera for Vypertron-Snake");
-    commands.spawn(Camera2dBundle::default());
+    
+    // Spawn a 2D camera that can render both game and UI
+    let camera_entity = commands.spawn(Camera2dBundle {
+        camera: Camera {
+            // Ensure this camera renders to the main window
+            target: bevy::render::camera::RenderTarget::default(),
+            ..default()
+        },
+        ..default()
+    }).id();
+    
+    info!("Camera spawned successfully with entity ID: {:?}", camera_entity);
 }
 
 /// Load global assets at startup
@@ -137,8 +148,17 @@ pub fn setup_home_screen(
     asset_handles: Res<AssetHandles>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    camera_query: Query<Entity, With<Camera>>,
 ) {
     info!("Setting up home screen");
+    
+    // Ensure we have a camera before setting up UI
+    if camera_query.is_empty() {
+        warn!("No camera found! Creating emergency camera for UI rendering");
+        commands.spawn(Camera2dBundle::default());
+    } else {
+        info!("Camera found, proceeding with home screen setup");
+    }
     
     // Background
     commands.spawn((
