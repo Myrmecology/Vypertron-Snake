@@ -194,19 +194,15 @@ impl Plugin for GamePlugin {
         app.add_systems(OnEnter(GameState::Settings), (
                 setup_settings_screen,
             ))
-            .add_systems(Update, (
-                handle_settings_input,
-                update_settings_ui,
-            ).run_if(in_state(GameState::Settings)));
+            .add_systems(Update, handle_settings_input_system.run_if(in_state(GameState::Settings)))
+            .add_systems(Update, update_settings_ui.run_if(in_state(GameState::Settings)));
 
         // === Credits ===
         app.add_systems(OnEnter(GameState::Credits), (
                 setup_credits_screen,
             ))
-            .add_systems(Update, (
-                handle_credits_input,
-                update_credits_scroll,
-            ).run_if(in_state(GameState::Credits)));
+            .add_systems(Update, handle_credits_input_system.run_if(in_state(GameState::Credits)))
+            .add_systems(Update, update_credits_scroll.run_if(in_state(GameState::Credits)));
 
         // === Cleanup ===
         app.add_systems(OnExit(GameState::Playing), (
@@ -362,21 +358,38 @@ fn setup_settings_screen() {
 }
 
 // FIXED: Made this a proper Bevy system with parameters
+fn handle_settings_input_system(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+) {
+    // Settings input handling
+    if keyboard_input.just_pressed(KeyCode::Escape) {
+        info!("Escape pressed in settings");
+    }
+}
+
+// FIXED: Made this a proper Bevy system with parameters
 fn update_settings_ui(
-    time: Res<Time>,
+    _time: Res<Time>,
     mut query: Query<&mut UIElement>,
 ) {
     // Settings UI updates
-    for mut ui_element in query.iter_mut() {
+    for mut _ui_element in query.iter_mut() {
         // Update UI elements as needed
-        if ui_element.animation.is_some() {
-            // Handle UI animations
-        }
     }
 }
 
 fn setup_credits_screen() {
     info!("Setting up credits screen...");
+}
+
+// FIXED: Made this a proper Bevy system with parameters
+fn handle_credits_input_system(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+) {
+    // Credits input handling
+    if keyboard_input.just_pressed(KeyCode::Escape) {
+        info!("Escape pressed in credits");
+    }
 }
 
 // FIXED: Made this a proper Bevy system with parameters
