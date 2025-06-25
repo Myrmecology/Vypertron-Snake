@@ -412,37 +412,47 @@ pub fn animate_title_snake(
 
 /// Handle input on home screen
 pub fn handle_home_screen_input(
-    keyboard_input: Res<ButtonInput<KeyCode>>, // FIXED: Input -> ButtonInput
-    mouse_input: Res<ButtonInput<MouseButton>>, // FIXED: Input -> ButtonInput
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mouse_input: Res<ButtonInput<MouseButton>>,
     windows: Query<&Window>,
     camera_query: Query<(&Camera, &GlobalTransform)>,
-    mut button_query: Query<(Entity, &Transform, &mut MenuButton)>, // FIXED: Combined queries to avoid conflict
+    mut button_query: Query<(Entity, &Transform, &mut MenuButton)>,
     mut state_events: EventWriter<StateTransitionEvent>,
     _game_settings: Res<GameSettings>,
     mut play_sound_events: EventWriter<PlaySoundEvent>,
 ) {
     // Handle spacebar to start game
     if keyboard_input.just_pressed(KeyCode::Space) {
+        info!("🎮 SPACEBAR pressed - going to character select");
         play_sound_events.send(PlaySoundEvent::new("menu_select"));
-        state_events.send(StateTransitionEvent::ToCharacterSelect); // FIXED: Use correct variant
+        state_events.send(StateTransitionEvent::ToCharacterSelect);
         return;
     }
     
     // Handle mouse interaction with buttons
     if let Ok(window) = windows.get_single() {
         if let Some(cursor_pos) = window.cursor_position() {
+            info!("🖱️ Mouse cursor at screen position: {:?}", cursor_pos);
+            
             if let Ok((camera, camera_transform)) = camera_query.get_single() {
-                // Convert cursor position to world coordinates
-                if let Some(world_pos) = camera.viewport_to_world_2d(camera_transform, cursor_pos) {
+                let world_pos = camera.viewport_to_world_2d(camera_transform, cursor_pos);
+                
+                if let Some(world_pos) = world_pos {
+                    info!("🌍 Mouse world position: {:?}", world_pos);
                     
                     // Check button hover and clicks
-                    for (entity, transform, mut button) in button_query.iter_mut() {
+                    for (_entity, transform, mut button) in button_query.iter_mut() {
                         let button_bounds = Rect::from_center_size(
                             transform.translation.truncate(),
                             Vec2::new(180.0, 50.0)
                         );
                         
+                        info!("🔘 Button '{}' at world pos: {:?}, bounds: {:?}", 
+                              button.text, transform.translation.truncate(), button_bounds);
+                        
                         if button_bounds.contains(world_pos) {
+                            info!("✅ Button '{}' is HOVERED!", button.text);
+                            
                             // Button is hovered
                             if button.state != ButtonState::Hovered {
                                 button.state = ButtonState::Hovered;
@@ -451,21 +461,27 @@ pub fn handle_home_screen_input(
                             
                             // Handle click
                             if mouse_input.just_pressed(MouseButton::Left) {
+                                info!("🖱️ Button '{}' was CLICKED!", button.text);
                                 button.state = ButtonState::Pressed;
                                 play_sound_events.send(PlaySoundEvent::new("menu_select"));
                                 
                                 // Execute button action
                                 match &button.action {
                                     ButtonAction::StartGame => {
-                                        state_events.send(StateTransitionEvent::ToCharacterSelect); // FIXED: Use correct variant
+                                        info!("🚀 StartGame button clicked");
+                                        state_events.send(StateTransitionEvent::ToCharacterSelect);
                                     },
                                     ButtonAction::OpenSettings => {
-                                        state_events.send(StateTransitionEvent::ToSettings); // FIXED: Use correct variant
+                                        info!("⚙️ Settings button clicked");
+                                        state_events.send(StateTransitionEvent::ToSettings);
                                     },
                                     ButtonAction::ShowCredits => {
-                                        state_events.send(StateTransitionEvent::ToCredits); // FIXED: Use correct variant
+                                        info!("📜 Credits button clicked");
+                                        state_events.send(StateTransitionEvent::ToCredits);
                                     },
-                                    _ => {},
+                                    _ => {
+                                        info!("❓ Unknown button action: {:?}", button.action);
+                                    },
                                 }
                             }
                         } else {
@@ -475,7 +491,11 @@ pub fn handle_home_screen_input(
                             }
                         }
                     }
+                } else {
+                    warn!("❌ Could not convert cursor position to world coordinates");
                 }
+            } else {
+                warn!("❌ Could not get camera for coordinate conversion");
             }
         }
     }
@@ -721,12 +741,14 @@ pub fn handle_character_selection_input(
 ) {
     // Handle keyboard input
     if keyboard_input.just_pressed(KeyCode::Escape) {
+        info!("🔙 ESCAPE pressed - going back to home screen");
         state_events.send(StateTransitionEvent::ToHomeScreen); // FIXED: Use correct variant
         return;
     }
     
     if keyboard_input.just_pressed(KeyCode::Enter) {
         let selected_char = character_selection.selected_character;
+        info!("🎮 ENTER pressed - starting game with character {}", selected_char);
         state_events.send(StateTransitionEvent::StartGame { // FIXED: Remove level parameter
             character_id: selected_char
         });
@@ -737,6 +759,7 @@ pub fn handle_character_selection_input(
     if keyboard_input.just_pressed(KeyCode::ArrowLeft) {
         if character_selection.selected_character > 1 {
             character_selection.selected_character -= 1;
+            info!("⬅️ Selected character: {}", character_selection.selected_character);
             play_sound_events.send(PlaySoundEvent::new("menu_navigate"));
         }
     }
@@ -744,6 +767,7 @@ pub fn handle_character_selection_input(
     if keyboard_input.just_pressed(KeyCode::ArrowRight) {
         if character_selection.selected_character < 4 {
             character_selection.selected_character += 1;
+            info!("➡️ Selected character: {}", character_selection.selected_character);
             play_sound_events.send(PlaySoundEvent::new("menu_navigate"));
         }
     }
@@ -751,24 +775,35 @@ pub fn handle_character_selection_input(
     // Handle mouse interaction
     if let Ok(window) = windows.get_single() {
         if let Some(cursor_pos) = window.cursor_position() {
+            info!("🖱️ Character select - Mouse cursor at: {:?}", cursor_pos);
+            
             if let Ok((camera, camera_transform)) = camera_query.get_single() {
                 if let Some(world_pos) = camera.viewport_to_world_2d(camera_transform, cursor_pos) {
+                    info!("🌍 Character select - Mouse world position: {:?}", world_pos);
                     
-                    let mut clicked_character_id = None;
+                    let mut _clicked_character_id = None;
                     
                     // Check character card clicks and update selection states in one pass
                     for (_entity, transform, mut card) in character_card_query.iter_mut() {
+                        let card_bounds = Rect::from_center_size(
+                            transform.translation.truncate(),
+                            Vec2::new(200.0, 300.0)
+                        );
+                        
+                        info!("🃏 Character card '{}' at: {:?}, bounds: {:?}", 
+                              card.name, transform.translation.truncate(), card_bounds);
+                        
                         // First check if this card was clicked
                         if card.is_unlocked {
-                            let card_bounds = Rect::from_center_size(
-                                transform.translation.truncate(),
-                                Vec2::new(200.0, 300.0)
-                            );
-                            
-                            if card_bounds.contains(world_pos) && mouse_input.just_pressed(MouseButton::Left) {
-                                character_selection.selected_character = card.character_id;
-                                clicked_character_id = Some(card.character_id);
-                                play_sound_events.send(PlaySoundEvent::new("menu_select"));
+                            if card_bounds.contains(world_pos) {
+                                info!("✅ Character card '{}' is HOVERED!", card.name);
+                                
+                                if mouse_input.just_pressed(MouseButton::Left) {
+                                    info!("🖱️ Character card '{}' was CLICKED!", card.name);
+                                    character_selection.selected_character = card.character_id;
+                                    _clicked_character_id = Some(card.character_id);
+                                    play_sound_events.send(PlaySoundEvent::new("menu_select"));
+                                }
                             }
                         }
                         
@@ -783,24 +818,36 @@ pub fn handle_character_selection_input(
                             Vec2::new(180.0, 50.0)
                         );
                         
+                        info!("🔘 Character select button '{}' at: {:?}, bounds: {:?}", 
+                              button.text, transform.translation.truncate(), button_bounds);
+                        
                         if button_bounds.contains(world_pos) && mouse_input.just_pressed(MouseButton::Left) {
+                            info!("🖱️ Character select button '{}' was CLICKED!", button.text);
                             play_sound_events.send(PlaySoundEvent::new("menu_select"));
                             
                             match &button.action {
                                 ButtonAction::StartGame => {
                                     let selected_char = character_selection.selected_character;
+                                    info!("🚀 Start Adventure clicked - character {}", selected_char);
                                     state_events.send(StateTransitionEvent::StartGame { // FIXED: Remove level parameter
                                         character_id: selected_char
                                     });
                                 },
                                 ButtonAction::QuitToMenu => {
+                                    info!("🔙 Back button clicked");
                                     state_events.send(StateTransitionEvent::ToHomeScreen); // FIXED: Use correct variant
                                 },
-                                _ => {},
+                                _ => {
+                                    info!("❓ Unknown button action: {:?}", button.action);
+                                },
                             }
                         }
                     }
+                } else {
+                    warn!("❌ Could not convert cursor position to world coordinates");
                 }
+            } else {
+                warn!("❌ Could not get camera for coordinate conversion");
             }
         }
     }
