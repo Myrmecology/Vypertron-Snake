@@ -694,8 +694,7 @@ pub fn handle_character_selection_input(
     windows: Query<&Window>,
     camera_query: Query<(&Camera, &GlobalTransform)>,
     mut character_selection: ResMut<CharacterSelection>,
-    character_card_query: Query<(Entity, &Transform, &CharacterCard)>,
-    mut character_card_mutation_query: Query<&mut CharacterCard>,
+    mut character_card_query: Query<(Entity, &Transform, &mut CharacterCard)>, // FIXED: Combined queries to avoid conflict
     mut button_query: Query<(Entity, &Transform, &mut MenuButton)>, // FIXED: Combined query
     mut state_events: EventWriter<StateTransitionEvent>,
     mut play_sound_events: EventWriter<PlaySoundEvent>,
@@ -735,8 +734,11 @@ pub fn handle_character_selection_input(
             if let Ok((camera, camera_transform)) = camera_query.get_single() {
                 if let Some(world_pos) = camera.viewport_to_world_2d(camera_transform, cursor_pos) {
                     
-                    // Check character card clicks
-                    for (_entity, transform, card) in character_card_query.iter() {
+                    let mut clicked_character_id = None;
+                    
+                    // Check character card clicks and update selection states in one pass
+                    for (_entity, transform, mut card) in character_card_query.iter_mut() {
+                        // First check if this card was clicked
                         if card.is_unlocked {
                             let card_bounds = Rect::from_center_size(
                                 transform.translation.truncate(),
@@ -745,14 +747,13 @@ pub fn handle_character_selection_input(
                             
                             if card_bounds.contains(world_pos) && mouse_input.just_pressed(MouseButton::Left) {
                                 character_selection.selected_character = card.character_id;
+                                clicked_character_id = Some(card.character_id);
                                 play_sound_events.send(PlaySoundEvent::new("menu_select"));
-                                
-                                // FIXED: Update character card selection states - simplified iteration
-                                for mut card_mut in character_card_mutation_query.iter_mut() {
-                                    card_mut.is_selected = card_mut.character_id == character_selection.selected_character;
-                                }
                             }
                         }
+                        
+                        // Update selection state for all cards
+                        card.is_selected = card.character_id == character_selection.selected_character;
                     }
                     
                     // Check button clicks (reuse home screen button logic)
