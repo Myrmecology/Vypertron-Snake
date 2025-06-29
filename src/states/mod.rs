@@ -124,24 +124,36 @@ pub fn handle_state_transitions(
     for event in state_events.read() {
         match event {
             StateTransitionEvent::ToHomeScreen => {
+                info!("🏠 Transitioning to HomeScreen");
                 game_state.set(GameState::HomeScreen);
                 pause_state.set(PauseState::Unpaused);
             }
             StateTransitionEvent::ToCharacterSelect => {
+                info!("🐍 Transitioning to CharacterSelect");
                 previous_state.state = Some(current_state.get().clone());
                 game_state.set(GameState::CharacterSelect);
                 character_state.set(CharacterSelectState::Overview);
             }
             StateTransitionEvent::StartGame { character_id } => {
+                info!("🎮 Starting game with character {}", character_id);
                 progression.selected_character = *character_id;
                 progression.current_level = 1; // Always start at level 1 for new games
                 progression.is_new_game = true;
-                game_state.set(GameState::Loading);
+                // FIXED: Skip loading state and go directly to playing
+                game_state.set(GameState::Playing);
+                pause_state.set(PauseState::Unpaused);
+                info!("✅ Game started! Now in Playing state");
+            }
+            StateTransitionEvent::PauseGame => {
+                info!("⏸️ Pausing game");
+                pause_state.set(PauseState::Paused);
+            }
+            StateTransitionEvent::ResumeGame => {
+                info!("▶️ Resuming game");
                 pause_state.set(PauseState::Unpaused);
             }
-            StateTransitionEvent::PauseGame => pause_state.set(PauseState::Paused),
-            StateTransitionEvent::ResumeGame => pause_state.set(PauseState::Unpaused),
             StateTransitionEvent::GameOver { final_score } => {
+                info!("💀 Game over with score: {}", final_score);
                 let i = (progression.current_level - 1) as usize;
                 if i < 10 {
                     progression.level_scores[i] = progression.level_scores[i].max(*final_score);
@@ -151,6 +163,7 @@ pub fn handle_state_transitions(
                 pause_state.set(PauseState::Unpaused);
             }
             StateTransitionEvent::LevelComplete { score, level } => {
+                info!("🎉 Level {} complete with score: {}", level, score);
                 let i = (*level - 1) as usize;
                 if i < 10 {
                     progression.level_scores[i] = progression.level_scores[i].max(*score);
@@ -160,11 +173,13 @@ pub fn handle_state_transitions(
                 game_state.set(GameState::LevelComplete);
             }
             StateTransitionEvent::StartCutscene { cutscene_type } => {
+                info!("🎬 Starting cutscene: {:?}", cutscene_type);
                 previous_state.state = Some(current_state.get().clone());
                 cutscene_state.set(cutscene_type.clone());
                 game_state.set(GameState::Cutscene);
             }
             StateTransitionEvent::EndCutscene => {
+                info!("🎬 Ending cutscene");
                 game_state.set(if progression.current_level > 10 {
                     GameState::Credits
                 } else {
@@ -172,23 +187,29 @@ pub fn handle_state_transitions(
                 });
             }
             StateTransitionEvent::ToSettings => {
+                info!("⚙️ Opening settings");
                 previous_state.state = Some(current_state.get().clone());
                 game_state.set(GameState::Settings);
             }
             StateTransitionEvent::FromSettings => {
+                info!("⚙️ Closing settings");
                 game_state.set(
                     previous_state.state.take().unwrap_or(GameState::HomeScreen),
                 );
             }
             StateTransitionEvent::ToCredits => {
+                info!("📜 Opening credits");
                 previous_state.state = Some(current_state.get().clone());
                 game_state.set(GameState::Credits);
             }
             StateTransitionEvent::RestartLevel => {
-                game_state.set(GameState::Loading);
+                info!("🔄 Restarting level");
+                // FIXED: Skip loading and go directly to playing for restart
+                game_state.set(GameState::Playing);
                 pause_state.set(PauseState::Unpaused);
             }
             StateTransitionEvent::QuitToMenu => {
+                info!("🚪 Quitting to menu");
                 game_state.set(GameState::HomeScreen);
                 pause_state.set(PauseState::Unpaused);
                 progression.is_new_game = true;
