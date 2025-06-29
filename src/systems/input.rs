@@ -101,7 +101,7 @@ pub fn handle_input(
             // Home screen input handled in systems/mod.rs
         },
         GameState::CharacterSelect => {
-            // Character selection input handled in systems/mod.rs
+            // Character selection input handled by handle_character_selection_input system
         },
         GameState::Playing => {
             if pause_state.get() == &PauseState::Unpaused {
@@ -224,6 +224,146 @@ fn handle_global_input(
             _ => {},
         }
     }
+}
+
+// ===============================
+// CHARACTER SELECTION INPUT SYSTEM
+// ===============================
+
+/// Handle character selection screen input - ADDED: This was missing!
+pub fn handle_character_selection_input(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mouse_input: Res<ButtonInput<MouseButton>>,
+    mut character_selection: ResMut<CharacterSelection>,
+    mut state_events: EventWriter<StateTransitionEvent>,
+    mut play_sound_events: EventWriter<PlaySoundEvent>,
+    interaction_query: Query<(&Interaction, &MenuButton), (Changed<Interaction>, With<Button>)>,
+    windows: Query<&Window>,
+    camera_query: Query<(&Camera, &GlobalTransform)>,
+) {
+    // Handle button interactions
+    for (interaction, menu_button) in interaction_query.iter() {
+        match *interaction {
+            Interaction::Pressed => {
+                match &menu_button.action { // FIXED: Changed from button_type to action
+                    ButtonAction::StartGame => { // FIXED: Changed from MenuButtonType to ButtonAction
+                        play_sound_events.send(PlaySoundEvent::new("menu_select"));
+                        state_events.send(StateTransitionEvent::StartGame {
+                            character_id: character_selection.selected_character,
+                        });
+                        info!("Starting game with character {}", character_selection.selected_character);
+                    },
+                    ButtonAction::QuitToMenu => { // FIXED: Using proper enum variant
+                        play_sound_events.send(PlaySoundEvent::new("menu_navigate"));
+                        state_events.send(StateTransitionEvent::ToHomeScreen);
+                        info!("Returning to home screen");
+                    },
+                    ButtonAction::SelectCharacter(character_id) => { // FIXED: Using proper enum variant
+                        // Check if character is unlocked - FIXED: Direct array access
+                        if is_character_unlocked(&character_selection, *character_id) {
+                            character_selection.selected_character = *character_id;
+                            character_selection.selected_character_id = *character_id; // FIXED: Update both fields
+                            play_sound_events.send(PlaySoundEvent::new("menu_navigate"));
+                            info!("Selected character {}", character_id);
+                        } else {
+                            play_sound_events.send(PlaySoundEvent::new("menu_error"));
+                            info!("Character {} is locked", character_id);
+                        }
+                    },
+                    _ => {
+                        // Other button types not handled in character selection
+                    }
+                }
+            },
+            Interaction::Hovered => {
+                // Play subtle hover sound
+                play_sound_events.send(
+                    PlaySoundEvent::new("menu_hover")
+                        .with_volume(0.3)
+                        .with_pitch(1.2)
+                );
+            },
+            Interaction::None => {
+                // No interaction
+            }
+        }
+    }
+
+    // Handle keyboard navigation
+    if keyboard_input.just_pressed(KeyCode::ArrowLeft) || keyboard_input.just_pressed(KeyCode::KeyA) {
+        // Move to previous character
+        let mut new_character = character_selection.selected_character;
+        loop {
+            new_character = if new_character > 1 { new_character - 1 } else { 4 };
+            if is_character_unlocked(&character_selection, new_character) { // FIXED: Use helper function
+                character_selection.selected_character = new_character;
+                character_selection.selected_character_id = new_character; // FIXED: Update both fields
+                play_sound_events.send(PlaySoundEvent::new("menu_navigate"));
+                break;
+            }
+            if new_character == character_selection.selected_character {
+                break; // Prevent infinite loop if all characters are locked
+            }
+        }
+    }
+
+    if keyboard_input.just_pressed(KeyCode::ArrowRight) || keyboard_input.just_pressed(KeyCode::KeyD) {
+        // Move to next character
+        let mut new_character = character_selection.selected_character;
+        loop {
+            new_character = if new_character < 4 { new_character + 1 } else { 1 };
+            if is_character_unlocked(&character_selection, new_character) { // FIXED: Use helper function
+                character_selection.selected_character = new_character;
+                character_selection.selected_character_id = new_character; // FIXED: Update both fields
+                play_sound_events.send(PlaySoundEvent::new("menu_navigate"));
+                break;
+            }
+            if new_character == character_selection.selected_character {
+                break; // Prevent infinite loop if all characters are locked
+            }
+        }
+    }
+
+    // Handle Enter key to start game
+    if keyboard_input.just_pressed(KeyCode::Enter) || keyboard_input.just_pressed(KeyCode::Space) {
+        play_sound_events.send(PlaySoundEvent::new("menu_select"));
+        state_events.send(StateTransitionEvent::StartGame {
+            character_id: character_selection.selected_character,
+        });
+        info!("Starting game with character {} (keyboard)", character_selection.selected_character);
+    }
+
+    // Handle Escape to go back
+    if keyboard_input.just_pressed(KeyCode::Escape) {
+        play_sound_events.send(PlaySoundEvent::new("menu_navigate"));
+        state_events.send(StateTransitionEvent::ToHomeScreen);
+        info!("Returning to home screen (keyboard)");
+    }
+
+    // Handle mouse clicks on character cards (for cases where Interaction doesn't work)
+    if mouse_input.just_pressed(MouseButton::Left) {
+        // Get cursor position and check if it's over a character card
+        if let Ok(window) = windows.get_single() {
+            if let Some(cursor_pos) = window.cursor_position() {
+                if let Ok((camera, camera_transform)) = camera_query.get_single() {
+                    // Convert screen space to world space
+                    if let Some(_world_pos) = camera.viewport_to_world_2d(camera_transform, cursor_pos) {
+                        // This would need character card bounds checking
+                        // For now, we'll rely on the Interaction system above
+                        info!("Mouse click detected at {:?}", cursor_pos);
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Helper function to check if a character is unlocked - ADDED: This was missing
+fn is_character_unlocked(character_selection: &CharacterSelection, character_id: u32) -> bool {
+    if character_id < 1 || character_id > 4 {
+        return false;
+    }
+    character_selection.unlocked_characters[(character_id - 1) as usize]
 }
 
 /// Handle gameplay input (snake movement)
