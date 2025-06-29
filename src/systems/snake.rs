@@ -65,7 +65,7 @@ pub fn spawn_snake(
         },
         Snake {
             direction: Vec2::new(1.0, 0.0), // Start moving right
-            speed: level_def.starting_speed,
+            speed: 3.0, // 3 moves per second - much more reasonable!
             move_timer: 0.0,
             length: 3, // Start with 3 segments
             is_alive: true,
@@ -144,10 +144,10 @@ fn spawn_initial_segments(
 }
 
 // ===============================
-// SNAKE MOVEMENT SYSTEM
+// SNAKE MOVEMENT SYSTEM - FIXED
 // ===============================
 
-/// Main snake movement system
+/// Main snake movement system - SIMPLIFIED and FIXED
 pub fn move_snake(
     time: Res<Time>,
     mut snake_query: Query<(Entity, &mut Snake, &mut Transform, &mut GridPosition), With<Snake>>,
@@ -160,52 +160,105 @@ pub fn move_snake(
     level_manager: Res<LevelManager>,
     character_selection: Res<CharacterSelection>,
     mut play_sound_events: EventWriter<PlaySoundEvent>,
-    mut _state_events: EventWriter<StateTransitionEvent>, // FIXED: Added underscore prefix for unused parameter
+    mut _state_events: EventWriter<StateTransitionEvent>,
 ) {
-    for (_snake_entity, mut snake, mut snake_transform, mut snake_grid_pos) in snake_query.iter_mut() { // FIXED: Added underscore prefix for unused variable
+    for (_snake_entity, mut snake, mut snake_transform, mut snake_grid_pos) in snake_query.iter_mut() {
         if !snake.is_alive {
+            debug!("Snake is not alive, skipping movement");
             continue;
+        }
+        
+        // Debug: Confirm movement system is running
+        if snake.move_timer == 0.0 {
+            debug!("Snake movement system active. Initial speed: {:.2}, Direction: {:?}", 
+                   snake.speed, snake.direction);
         }
         
         // Update movement timer
         snake.move_timer += time.delta_seconds();
         
-        // Calculate movement interval based on snake speed
-        let move_interval = 1.0 / snake.speed;
+        // Calculate movement interval - simpler approach
+        // Speed = moves per second, so interval = 1/speed
+        let move_interval = 1.0 / snake.speed.max(0.5); // Minimum 0.5 moves per second
         
+        // Debug output to see what's happening
         if snake.move_timer >= move_interval {
+            debug!("Snake moving! Timer: {:.2}, Interval: {:.2}, Speed: {:.2}, Direction: {:?}", 
+                   snake.move_timer, move_interval, snake.speed, snake.direction);
             // Time to move!
             snake.move_timer = 0.0;
             
-            // Store previous positions for segment following
-            let previous_positions = collect_segment_positions(&segment_query);
+            // STEP 1: Store the current head position before moving
+            let old_head_pos = Vec2::new(snake_grid_pos.x as f32, snake_grid_pos.y as f32);
             
-            // Calculate new head position
-            let _current_pos = snake_grid_pos.to_world_position(crate::GRID_SIZE); // FIXED: Added underscore prefix for unused variable
-            let new_grid_pos = Vec2::new(
+            // STEP 2: Collect all body segment positions in order (before moving anything)
+            let mut body_positions = Vec::new();
+            let mut segments_data: Vec<_> = segment_query.iter().collect();
+            segments_data.sort_by_key(|(segment, _, _, _)| segment.segment_index);
+            
+            for (segment, _, grid_pos, _) in &segments_data {
+                body_positions.push(Vec2::new(grid_pos.x as f32, grid_pos.y as f32));
+            }
+            
+            // STEP 3: Move the head to new position
+            let new_head_pos = Vec2::new(
                 snake_grid_pos.x as f32 + snake.direction.x,
                 snake_grid_pos.y as f32 + snake.direction.y,
             );
             
             // Update head position
-            snake_grid_pos.x = new_grid_pos.x as i32;
-            snake_grid_pos.y = new_grid_pos.y as i32;
+            snake_grid_pos.x = new_head_pos.x as i32;
+            snake_grid_pos.y = new_head_pos.y as i32;
             
-            // Apply character-specific movement modifiers
-            apply_character_movement_modifiers(&mut snake, &character_selection);
-            
-            // Start smooth movement animation for head
-            let world_pos = MathUtils::grid_to_world(new_grid_pos, crate::GRID_SIZE);
+            // Update head transform
+            let world_pos = MathUtils::grid_to_world(new_head_pos, crate::GRID_SIZE);
             snake_transform.translation.x = world_pos.x;
             snake_transform.translation.y = world_pos.y;
             
-            // Update all body segments to follow
-            update_snake_segments(
-                &mut segment_query,
-                &previous_positions,
-                new_grid_pos,
-                snake.length,
-            );
+            // STEP 4: Move body segments to follow
+            // First segment moves to where head was
+            // Second segment moves to where first segment was, etc.
+            let mut previous_pos = old_head_pos;
+            
+            for (mut segment, mut transform, mut grid_pos, mut _smooth_movement) in segment_query.iter_mut() {
+                if segment.segment_index <= snake.length && segment.segment_index > 0 {
+                    // Get where this segment should move to
+                    let target_pos = if segment.segment_index == 1 {
+                        // First body segment moves to where head was
+                        previous_pos
+                    } else {
+                        // Other segments move to where the previous segment was
+                        let prev_segment_index = (segment.segment_index - 2) as usize;
+                        if prev_segment_index < body_positions.len() {
+                            body_positions[prev_segment_index]
+                        } else {
+                            previous_pos // Fallback
+                        }
+                    };
+                    
+                    // Update segment position
+                    grid_pos.x = target_pos.x as i32;
+                    grid_pos.y = target_pos.y as i32;
+                    segment.grid_position = target_pos;
+                    
+                    // Update transform
+                    let world_pos = MathUtils::grid_to_world(target_pos, crate::GRID_SIZE);
+                    transform.translation.x = world_pos.x;
+                    transform.translation.y = world_pos.y;
+                    
+                    // Apply scale variation for visual interest
+                    let scale_variation = 1.0 - (segment.segment_index as f32 * 0.02);
+                    segment.scale = scale_variation.max(0.7);
+                    
+                    // Update previous_pos for next iteration
+                    if segment.segment_index <= body_positions.len() as u32 {
+                        previous_pos = body_positions[(segment.segment_index - 1) as usize];
+                    }
+                }
+            }
+            
+            // Apply character-specific movement modifiers
+            apply_character_movement_modifiers(&mut snake, &character_selection);
             
             // Play movement sound with character-specific pitch
             let pitch_modifier = match snake.character_id {
@@ -220,7 +273,7 @@ pub fn move_snake(
                 PlaySoundEvent::new("snake_move")
                     .with_volume(0.25)
                     .with_pitch(pitch_modifier)
-                    .at_position(new_grid_pos)
+                    .at_position(new_head_pos)
             );
             
             // Check level boundaries and handle wrapping (if teleporters are active)
@@ -229,7 +282,11 @@ pub fn move_snake(
                 handle_teleporter_wrapping(&mut snake_grid_pos, level_def);
             }
             
-            debug!("Snake moved to: {:?}", new_grid_pos);
+            debug!("Snake moved to: {:?}", new_head_pos);
+        } else {
+            // Debug: Show why snake isn't moving
+            debug!("Snake waiting to move. Timer: {:.2}/{:.2}, Speed: {:.2}", 
+                   snake.move_timer, move_interval, snake.speed);
         }
         
         // Update smooth movement progress for visual interpolation
@@ -239,71 +296,6 @@ pub fn move_snake(
             snake.move_timer,
             1.0 / snake.speed,
         );
-    }
-}
-
-/// Collect current positions of all snake segments
-fn collect_segment_positions(
-    segment_query: &Query<(
-        &mut SnakeSegment, 
-        &mut Transform, 
-        &mut GridPosition,
-        &mut SmoothMovement
-    ), (With<SnakeSegment>, Without<Snake>)>
-) -> Vec<Vec2> {
-    let mut positions_with_indices = Vec::new();
-    
-    for (segment, _, grid_pos, _) in segment_query.iter() {
-        positions_with_indices.push((
-            segment.segment_index,
-            Vec2::new(grid_pos.x as f32, grid_pos.y as f32)
-        ));
-    }
-    
-    // FIXED: Sort by segment index instead of trying to compare Vec2 positions
-    positions_with_indices.sort_by_key(|(index, _)| *index);
-    
-    // Extract just the positions
-    positions_with_indices.into_iter().map(|(_, pos)| pos).collect()
-}
-
-/// Update snake body segments to follow the head
-fn update_snake_segments(
-    segment_query: &mut Query<(
-        &mut SnakeSegment, 
-        &mut Transform, 
-        &mut GridPosition,
-        &mut SmoothMovement
-    ), (With<SnakeSegment>, Without<Snake>)>,
-    previous_positions: &[Vec2],
-    head_position: Vec2,
-    snake_length: u32,
-) {
-    // Create the complete position chain: head + previous positions
-    let mut position_chain = vec![head_position];
-    position_chain.extend_from_slice(previous_positions);
-    
-    // Update each segment to follow the position chain
-    for (mut segment, mut _transform, mut grid_pos, mut smooth_movement) in segment_query.iter_mut() { // FIXED: Added underscore prefix for unused variable
-        let segment_index = segment.segment_index as usize;
-        
-        if segment_index < position_chain.len() && segment_index < snake_length as usize {
-            let new_pos = position_chain[segment_index];
-            
-            // Update grid position
-            grid_pos.x = new_pos.x as i32;
-            grid_pos.y = new_pos.y as i32;
-            segment.grid_position = new_pos;
-            
-            // Start smooth movement animation
-            smooth_movement.start_position = Vec2::new(_transform.translation.x, _transform.translation.y);
-            smooth_movement.target_position = MathUtils::grid_to_world(new_pos, crate::GRID_SIZE);
-            smooth_movement.progress = 0.0;
-            
-            // Apply scale variation for visual interest
-            let scale_variation = 1.0 - (segment_index as f32 * 0.02);
-            segment.scale = scale_variation.max(0.7);
-        }
     }
 }
 

@@ -160,7 +160,7 @@ pub fn setup_home_screen(
         info!("Camera found, proceeding with home screen setup");
     }
     
-    // Background
+    // Background - FIXED: Add UIElement for cleanup
     commands.spawn((
         SpriteBundle {
             sprite: Sprite {
@@ -170,6 +170,12 @@ pub fn setup_home_screen(
             },
             transform: Transform::from_xyz(0.0, 0.0, -10.0),
             ..default()
+        },
+        UIElement {
+            element_type: UIElementType::Title,
+            animation: None,
+            is_visible: true,
+            layer: 0,
         },
     ));
     
@@ -292,7 +298,7 @@ pub fn setup_home_screen(
     ));
 }
 
-/// Create the animated title snake that wraps around the title
+/// Create the animated title snake that wraps around the title - FIXED: Add UIElement for cleanup
 fn create_title_snake(
     commands: &mut Commands,
     meshes: &mut Assets<Mesh>,
@@ -314,7 +320,7 @@ fn create_title_snake(
     let snake_material = materials.add(ColorMaterial::from(Color::srgb(0.0, 0.8, 0.0))); // FIXED: rgb -> srgb
     let segment_mesh = meshes.add(Mesh::from(Rectangle::new(16.0, 16.0))); // FIXED: shape::Quad -> Rectangle
     
-    // Create title snake entity
+    // Create title snake entity - FIXED: Add UIElement for cleanup
     commands.spawn((
         ColorMesh2dBundle { // FIXED: MaterialMesh2dBundle -> ColorMesh2dBundle
             mesh: segment_mesh.into(),
@@ -328,10 +334,16 @@ fn create_title_snake(
             animation_speed: 0.3,
             segment_count: 8,
         },
+        UIElement {
+            element_type: UIElementType::Title,
+            animation: None,
+            is_visible: true,
+            layer: 100,
+        },
     ));
 }
 
-/// Spawn a menu button with consistent styling
+/// Spawn a menu button with consistent styling - FIXED: Add UIElement for cleanup
 fn spawn_menu_button(
     commands: &mut Commands,
     asset_handles: &AssetHandles,
@@ -344,7 +356,7 @@ fn spawn_menu_button(
     let button_material = materials.add(ColorMaterial::from(Color::srgb(0.2, 0.2, 0.3))); // FIXED: rgb -> srgb
     let button_mesh = meshes.add(Mesh::from(Rectangle::new(180.0, 50.0))); // FIXED: shape::Quad -> Rectangle
     
-    // Button background
+    // Button background - FIXED: Add UIElement for cleanup
     let _button_entity = commands.spawn((
         ColorMesh2dBundle { // FIXED: MaterialMesh2dBundle -> ColorMesh2dBundle
             mesh: button_mesh.into(),
@@ -358,9 +370,15 @@ fn spawn_menu_button(
             hover_timer: 0.0,
             text: text.to_string(),
         },
+        UIElement {
+            element_type: UIElementType::Title,
+            animation: None,
+            is_visible: true,
+            layer: 100,
+        },
     )).id();
     
-    // Button text
+    // Button text - FIXED: Add UIElement for cleanup
     commands.spawn((
         TextBundle::from_section(
             text,
@@ -376,6 +394,12 @@ fn spawn_menu_button(
             left: Val::Px(position.x - 80.0),
             ..default()
         }),
+        UIElement {
+            element_type: UIElementType::Title,
+            animation: None,
+            is_visible: true,
+            layer: 100,
+        },
     ));
 }
 

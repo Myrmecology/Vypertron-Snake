@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 // Custom modules - IMPORTANT: Import order matters!
-use crate::states::{StateTransitionEvent, GameState, PauseState, CharacterSelectState, CutsceneState, *}; // FIXED: Explicitly import our custom StateTransitionEvent and states first
+use crate::states::{StateTransitionEvent, GameState, PauseState, CharacterSelectState, CutsceneState, *};
 use crate::systems::*;
 use crate::systems::input::handle_character_selection_input; // Explicit import to resolve ambiguity
 use crate::systems::snake::*;
@@ -17,14 +17,14 @@ pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        // === States (FIXED for Bevy 0.14) ===
+        // === States ===
         app.init_state::<GameState>()
             .add_sub_state::<PauseState>()
             .add_sub_state::<CharacterSelectState>()
             .add_sub_state::<CutsceneState>();
 
         // === Events ===
-        app.add_event::<StateTransitionEvent>() // FIXED: Using our custom StateTransitionEvent
+        app.add_event::<StateTransitionEvent>()
             .add_event::<FoodCollisionEvent>()
             .add_event::<WallCollisionEvent>()
             .add_event::<SelfCollisionEvent>()
@@ -33,7 +33,7 @@ impl Plugin for GamePlugin {
             .add_event::<SnakeDeathEvent>()
             .add_event::<ExplosionEvent>()
             .add_event::<ParticleEvent>()
-            .add_event::<PlaySoundEvent>(); // ADDED: Audio events
+            .add_event::<PlaySoundEvent>();
 
         // === Resources ===
         app.insert_resource(HighScoreResource::default())
@@ -41,21 +41,23 @@ impl Plugin for GamePlugin {
             .insert_resource(LevelManager::default())
             .insert_resource(CharacterSelection::default())
             .insert_resource(GameTimer(Timer::from_seconds(0.0, TimerMode::Repeating)))
-            .insert_resource(SnakeDirection::Right) // FIXED: Now has Resource trait
+            .insert_resource(SnakeDirection::Right)
             .insert_resource(ScoreResource::default())
-            .insert_resource(PreviousGameState::default()) // ADDED: State management resource
-            .insert_resource(GameProgression::default()) // ADDED: Game progression tracking
-            .insert_resource(InputBuffer::default()) // ADDED: Input buffer
-            .insert_resource(InputValidation::default()) // ADDED: Input validation
-            .insert_resource(AssetHandles::default()); // ADDED: Asset management
+            .insert_resource(PreviousGameState::default())
+            .insert_resource(GameProgression::default())
+            .insert_resource(InputBuffer::default())
+            .insert_resource(InputValidation::default())
+            .insert_resource(AssetHandles::default())
+            .insert_resource(GameStatistics::default())  // ADDED: Missing resource
+            .insert_resource(SaveLoadState::default());  // ADDED: Missing resource
 
-        // === Core State Management System ===
+        // === Core State Management ===
         app.add_systems(Update, handle_state_transitions);
 
         // === Audio Plugin ===
         app.add_plugins(AudioPlugin);
 
-        // === Register Components for Reflect/Editor use ===
+        // === Register Components ===
         app.register_type::<Snake>()
             .register_type::<SnakeSegment>()
             .register_type::<Food>()
@@ -85,7 +87,7 @@ impl Plugin for GamePlugin {
                 update_menu_buttons,
             ).run_if(in_state(GameState::HomeScreen)));
 
-        // === Character Select ===
+        // === Character Selection ===
         app.add_systems(OnEnter(GameState::CharacterSelect), (
                 setup_character_selection,
                 load_character_assets,
@@ -96,49 +98,36 @@ impl Plugin for GamePlugin {
                 animate_character_previews,
             ).run_if(in_state(GameState::CharacterSelect)));
 
-        // === Loading State ===
-        app.add_systems(OnEnter(GameState::Loading), (
-                setup_loading_screen,
-                start_level_loading,
-            ).chain())
-            .add_systems(Update, (
-                update_loading_progress,
-                check_loading_complete,
-            ).run_if(in_state(GameState::Loading)));
-
-        // === Gameplay - FIXED: Carefully managed to avoid panics ===
+        // === Gameplay ===
         app.add_systems(OnEnter(GameState::Playing), (
-                // setup_game_level,        // TEMP: Commented out to avoid panic
-                spawn_snake,                // ENABLED: Basic snake spawning
-                // spawn_initial_food,      // TEMP: Commented out to avoid panic
-                setup_ui_elements,          // ENABLED: UI works fine
-                // load_level_assets,       // TEMP: Commented out to avoid panic
-                start_background_music,     // ENABLED: Music should work
+                setup_game_level,
+                spawn_snake,
+                // spawn_initial_food,     // TEMP: Commented out - missing FoodSpawnTimer resource
+                setup_ui_elements,
+                start_background_music,
             ).chain())
             .add_systems(Update, (
                 // Input and Movement
                 handle_input,
                 consume_buffered_input,
-                // move_snake,              // TEMP: Commented out to avoid dependencies
+                move_snake,                 // ENABLED: Test snake movement without collisions
                 
-                // Collision Detection - TEMP: All commented out to avoid panics
-                // check_food_collision,
-                // check_wall_collision,
-                // check_self_collision,
-                // check_special_collisions,
-                // check_boundary_collision,
+                // Collision Detection
+                // check_food_collision,       // TEMP: Commented out until food system works
+                // check_wall_collision,       // TEMP: Commented out for testing
+                // check_self_collision,       // TEMP: Commented out for testing
+                // check_boundary_collision,   // TEMP: Commented out for testing
                 
                 // Game Logic
-                // grow_snake,              // TEMP: Commented out to avoid dependencies
+                // grow_snake,                 // TEMP: Commented out until food collision works
                 update_score,
                 update_game_timer,
                 
                 // Visual Updates
-                // animate_snake,           // TEMP: Commented out to avoid dependencies
-                // update_smooth_movement,  // TEMP: Commented out to avoid dependencies
+                animate_snake,              // ENABLED: Snake animation/visibility
                 update_ui,
                 
-                // Effects - TEMP: All commented out to avoid panics
+                // Effects (keeping these disabled for now)
                 // update_speed_boost_effects,
                 // update_invincibility_effects,
                 // update_snake_trail,
@@ -161,12 +150,12 @@ impl Plugin for GamePlugin {
         app.add_systems(OnEnter(GameState::GameOver), (
                 trigger_death_explosion,
                 update_high_score,
-                setup_game_over_screen,
+                setup_game_over_screen,     // ENABLED: Now has GameStatistics resource
             ).chain())
             .add_systems(Update, (
                 animate_explosion_effects,
                 handle_game_over_input,
-                update_game_over_ui,
+                update_game_over_ui,        // ENABLED: Now has GameStatistics resource
             ).run_if(in_state(GameState::GameOver)));
 
         // === Level Complete ===
@@ -192,35 +181,42 @@ impl Plugin for GamePlugin {
             ).run_if(in_state(GameState::Cutscene)));
 
         // === Settings ===
-        app.add_systems(OnEnter(GameState::Settings), (
-                setup_settings_screen,
-            ))
-            .add_systems(Update, handle_settings_input_system.run_if(in_state(GameState::Settings)))
-            .add_systems(Update, update_settings_ui.run_if(in_state(GameState::Settings)));
+        app.add_systems(OnEnter(GameState::Settings), setup_settings_screen)
+            .add_systems(Update, (
+                handle_settings_input_system,
+                update_settings_ui,
+            ).run_if(in_state(GameState::Settings)));
 
         // === Credits ===
-        app.add_systems(OnEnter(GameState::Credits), (
-                setup_credits_screen,
-            ))
-            .add_systems(Update, handle_credits_input_system.run_if(in_state(GameState::Credits)))
-            .add_systems(Update, update_credits_scroll.run_if(in_state(GameState::Credits)));
+        app.add_systems(OnEnter(GameState::Credits), setup_credits_screen)
+            .add_systems(Update, (
+                handle_credits_input_system,
+                update_credits_scroll,
+            ).run_if(in_state(GameState::Credits)));
 
-        // === Cleanup - FIXED: Ensure character selection cleanup works ===
+        // === Food Systems - TEMP: Commented out until FoodSpawnTimer resource exists ===
+        // app.add_systems(Update, (
+        //         spawn_food_system,         // TEMP: Missing FoodSpawnTimer resource
+        //         animate_food,
+        //         update_food_expiration,
+        //         update_moving_food,
+        //     ).run_if(in_state(GameState::Playing)));
+
+        // === Cleanup Systems ===
         app.add_systems(OnExit(GameState::Playing), (
                 cleanup_game_level,
-                cleanup_food,
+                // cleanup_food,               // TEMP: Commented out until food system works
                 cleanup_effects,
                 cleanup_ui_elements,
             ))
             .add_systems(OnExit(GameState::HomeScreen), cleanup_home_screen)
-            .add_systems(OnExit(GameState::CharacterSelect), cleanup_character_selection) // FIXED: Ensure this exists
+            .add_systems(OnExit(GameState::CharacterSelect), cleanup_character_selection)
             .add_systems(OnExit(GameState::GameOver), cleanup_game_over)
             .add_systems(OnExit(GameState::Cutscene), cleanup_cutscene)
             .add_systems(OnExit(GameState::Settings), cleanup_settings)
-            .add_systems(OnExit(GameState::Credits), cleanup_credits)
-            .add_systems(OnExit(GameState::Loading), cleanup_loading);
+            .add_systems(OnExit(GameState::Credits), cleanup_credits);
 
-        // === Global Systems (Run in all states) ===
+        // === Global Systems ===
         app.add_systems(Update, (
                 update_audio_system,
                 handle_window_resize,
@@ -236,37 +232,30 @@ impl Plugin for GamePlugin {
                 input_visual_feedback,
                 input_haptic_feedback,
                 accessibility_input,
-                debug_current_state, // ADDED: Debug system to track state changes
+                debug_current_state,
             ));
 
-        // === Food Systems - TEMP: Commented out to avoid missing resource panics ===
-        // app.add_systems(Update, (
-        //         spawn_food_system,      // TEMP: This was causing FoodSpawnTimer panic
-        //         animate_food,
-        //         update_food_expiration,
-        //         update_moving_food,
-        //     ).run_if(in_state(GameState::Playing)));
-
-        // === Debug Systems (Only in debug builds) ===
+        // === Debug Systems ===
         #[cfg(debug_assertions)]
         app.add_systems(Update, debug_input);
 
-        // === Startup - FIXED: Camera MUST be first ===
+        // === Startup ===
         app.add_systems(Startup, (
-                setup_camera,               // CAMERA FIRST!
+                setup_camera,
                 load_global_assets,
                 initialize_audio_system,
                 load_saved_data,
                 initialize_food_system,
                 initialize_effects_system,
                 initialize_input_system,
-                force_initial_state,        // ADDED: Ensure we start in correct state
+                force_initial_state,
             ).chain());
     }
 }
 
-// === Placeholder Stubs ===
-// These should match Bevy signatures so they compile cleanly
+// ===============================
+// SYSTEM STUBS - These will be implemented in separate modules
+// ===============================
 
 fn load_home_screen_assets() {
     info!("Loading home screen assets...");
@@ -278,26 +267,6 @@ fn load_character_assets() {
 
 fn setup_game_level() {
     info!("Setting up game level...");
-}
-
-fn load_level_assets() {
-    info!("Loading level assets...");
-}
-
-fn setup_loading_screen() {
-    info!("Setting up loading screen...");
-}
-
-fn start_level_loading() {
-    info!("Starting level loading...");
-}
-
-fn update_loading_progress() {
-    // Progress tracking logic would go here
-}
-
-fn check_loading_complete() {
-    // Check if loading is complete and transition to playing
 }
 
 fn update_score() {
@@ -360,22 +329,18 @@ fn setup_settings_screen() {
     info!("Setting up settings screen...");
 }
 
-// FIXED: Made this a proper Bevy system with parameters
 fn handle_settings_input_system(
     keyboard_input: Res<ButtonInput<KeyCode>>,
 ) {
-    // Settings input handling
     if keyboard_input.just_pressed(KeyCode::Escape) {
         info!("Escape pressed in settings");
     }
 }
 
-// FIXED: Made this a proper Bevy system with parameters
 fn update_settings_ui(
     _time: Res<Time>,
     mut query: Query<&mut UIElement>,
 ) {
-    // Settings UI updates
     for mut _ui_element in query.iter_mut() {
         // Update UI elements as needed
     }
@@ -385,24 +350,19 @@ fn setup_credits_screen() {
     info!("Setting up credits screen...");
 }
 
-// FIXED: Made this a proper Bevy system with parameters
 fn handle_credits_input_system(
     keyboard_input: Res<ButtonInput<KeyCode>>,
 ) {
-    // Credits input handling
     if keyboard_input.just_pressed(KeyCode::Escape) {
         info!("Escape pressed in credits");
     }
 }
 
-// FIXED: Made this a proper Bevy system with parameters
 fn update_credits_scroll(
     time: Res<Time>,
     mut query: Query<&mut Transform, With<UIElement>>,
 ) {
-    // Credits scrolling logic
     for mut transform in query.iter_mut() {
-        // Scroll credits upward
         transform.translation.y += 50.0 * time.delta_seconds();
     }
 }
@@ -421,10 +381,6 @@ fn cleanup_settings() {
 
 fn cleanup_credits() {
     info!("Cleaning up credits...");
-}
-
-fn cleanup_loading() {
-    info!("Cleaning up loading screen...");
 }
 
 fn update_audio_system() {
@@ -461,10 +417,6 @@ fn update_shockwave_rings() {
 
 fn update_delayed_effects() {
     // Delayed effect processing
-}
-
-fn cleanup_pause_menu() {
-    // Cleanup pause menu when not needed
 }
 
 fn handle_window_resize() {
@@ -507,7 +459,6 @@ fn initialize_effects_system() {
     info!("Initializing effects system...");
 }
 
-// ADDED: Debug system to track state changes
 fn debug_current_state(
     current_state: Res<State<GameState>>,
 ) {
@@ -521,7 +472,6 @@ fn debug_current_state(
     }
 }
 
-// ADDED: Force the game to start in HomeScreen state
 fn force_initial_state(
     mut game_state: ResMut<NextState<GameState>>,
 ) {
