@@ -543,10 +543,10 @@ pub fn cleanup_home_screen(
 }
 
 // ===============================
-// CHARACTER SELECTION SYSTEMS - FIXED
+// CHARACTER SELECTION SYSTEMS - FIXED: Proper UI cleanup
 // ===============================
 
-/// Setup character selection screen - FIXED: Create proper interactive UI
+/// Setup character selection screen - FIXED: Create proper interactive UI with cleanup tags
 pub fn setup_character_selection(
     mut commands: Commands,
     asset_handles: Res<AssetHandles>,
@@ -554,42 +554,71 @@ pub fn setup_character_selection(
 ) {
     info!("Setting up character selection screen with interactive UI");
     
-    // Main UI root node
-    commands.spawn(NodeBundle {
-        style: Style {
-            width: Val::Percent(100.0),
-            height: Val::Percent(100.0),
-            flex_direction: FlexDirection::Column,
-            justify_content: JustifyContent::SpaceBetween,
-            align_items: AlignItems::Center,
-            padding: UiRect::all(Val::Px(20.0)),
+    // Main UI root node - FIXED: Add UIElement for cleanup
+    commands.spawn((
+        NodeBundle {
+            style: Style {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                flex_direction: FlexDirection::Column,
+                justify_content: JustifyContent::SpaceBetween,
+                align_items: AlignItems::Center,
+                padding: UiRect::all(Val::Px(20.0)),
+                ..default()
+            },
+            background_color: Color::srgb(0.05, 0.1, 0.15).into(),
             ..default()
         },
-        background_color: Color::srgb(0.05, 0.1, 0.15).into(),
-        ..default()
-    }).with_children(|parent| {
-        // Title
-        parent.spawn(TextBundle::from_section(
-            "Choose Your Snake",
-            TextStyle {
-                font: asset_handles.fonts.get("main_font").cloned().unwrap_or_default(),
-                font_size: 36.0,
-                color: Color::srgb(0.0, 1.0, 0.8),
+        UIElement {
+            element_type: UIElementType::Title,
+            animation: None,
+            is_visible: true,
+            layer: 100,
+        },
+    )).with_children(|parent| {
+        // Title - FIXED: Add UIElement for cleanup
+        parent.spawn((
+            TextBundle::from_section(
+                "Choose Your Snake",
+                TextStyle {
+                    font: asset_handles.fonts.get("main_font").cloned().unwrap_or_default(),
+                    font_size: 36.0,
+                    color: Color::srgb(0.0, 1.0, 0.8),
+                },
+            ),
+            UIElement {
+                element_type: UIElementType::Title,
+                animation: Some(UIAnimation {
+                    animation_type: UIAnimationType::FadeIn,
+                    timer: 0.0,
+                    duration: 1.0,
+                    loops: false,
+                }),
+                is_visible: true,
+                layer: 100,
             },
         ));
 
-        // Character selection container
-        parent.spawn(NodeBundle {
-            style: Style {
-                width: Val::Percent(100.0),
-                height: Val::Px(400.0),
-                flex_direction: FlexDirection::Row,
-                justify_content: JustifyContent::SpaceEvenly,
-                align_items: AlignItems::Center,
+        // Character selection container - FIXED: Add UIElement for cleanup
+        parent.spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Percent(100.0),
+                    height: Val::Px(400.0),
+                    flex_direction: FlexDirection::Row,
+                    justify_content: JustifyContent::SpaceEvenly,
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
                 ..default()
             },
-            ..default()
-        }).with_children(|parent| {
+            UIElement {
+                element_type: UIElementType::Title,
+                animation: None,
+                is_visible: true,
+                layer: 100,
+            },
+        )).with_children(|parent| {
             // Create character cards
             for (i, character) in character_selection.characters.iter().enumerate() {
                 let character_id = (i + 1) as u32;
@@ -607,52 +636,84 @@ pub fn setup_character_selection(
             }
         });
 
-        // Selected character info
+        // Selected character info - FIXED: Add UIElement for cleanup
         let selected_character = &character_selection.characters[(character_selection.selected_character - 1) as usize];
-        parent.spawn(NodeBundle {
-            style: Style {
-                width: Val::Percent(60.0),
-                height: Val::Px(100.0),
-                flex_direction: FlexDirection::Column,
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                padding: UiRect::all(Val::Px(20.0)),
+        parent.spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Percent(60.0),
+                    height: Val::Px(100.0),
+                    flex_direction: FlexDirection::Column,
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    padding: UiRect::all(Val::Px(20.0)),
+                    ..default()
+                },
+                background_color: Color::srgba(0.2, 0.2, 0.3, 0.8).into(),
                 ..default()
             },
-            background_color: Color::srgba(0.2, 0.2, 0.3, 0.8).into(),
-            ..default()
-        }).with_children(|parent| {
-            parent.spawn(TextBundle::from_section(
-                &selected_character.name,
-                TextStyle {
-                    font: asset_handles.fonts.get("main_font").cloned().unwrap_or_default(),
-                    font_size: 24.0,
-                    color: Color::WHITE,
+            UIElement {
+                element_type: UIElementType::Title,
+                animation: None,
+                is_visible: true,
+                layer: 100,
+            },
+        )).with_children(|parent| {
+            parent.spawn((
+                TextBundle::from_section(
+                    &selected_character.name,
+                    TextStyle {
+                        font: asset_handles.fonts.get("main_font").cloned().unwrap_or_default(),
+                        font_size: 24.0,
+                        color: Color::WHITE,
+                    },
+                ),
+                UIElement {
+                    element_type: UIElementType::Title,
+                    animation: None,
+                    is_visible: true,
+                    layer: 100,
                 },
             ));
             
-            parent.spawn(TextBundle::from_section(
-                &selected_character.description,
-                TextStyle {
-                    font: asset_handles.fonts.get("main_font").cloned().unwrap_or_default(),
-                    font_size: 16.0,
-                    color: Color::srgb(0.8, 0.8, 0.8),
+            parent.spawn((
+                TextBundle::from_section(
+                    &selected_character.description,
+                    TextStyle {
+                        font: asset_handles.fonts.get("main_font").cloned().unwrap_or_default(),
+                        font_size: 16.0,
+                        color: Color::srgb(0.8, 0.8, 0.8),
+                    },
+                ),
+                UIElement {
+                    element_type: UIElementType::Subtitle,
+                    animation: None,
+                    is_visible: true,
+                    layer: 100,
                 },
             ));
         });
 
-        // Bottom buttons container
-        parent.spawn(NodeBundle {
-            style: Style {
-                width: Val::Percent(100.0),
-                height: Val::Px(80.0),
-                flex_direction: FlexDirection::Row,
-                justify_content: JustifyContent::SpaceBetween,
-                align_items: AlignItems::Center,
+        // Bottom buttons container - FIXED: Add UIElement for cleanup
+        parent.spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Percent(100.0),
+                    height: Val::Px(80.0),
+                    flex_direction: FlexDirection::Row,
+                    justify_content: JustifyContent::SpaceBetween,
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
                 ..default()
             },
-            ..default()
-        }).with_children(|parent| {
+            UIElement {
+                element_type: UIElementType::Title,
+                animation: None,
+                is_visible: true,
+                layer: 100,
+            },
+        )).with_children(|parent| {
             // Back button
             create_ui_menu_button(
                 parent,
@@ -674,7 +735,7 @@ pub fn setup_character_selection(
     });
 }
 
-/// Create a character selection button with proper interaction
+/// Create a character selection button with proper interaction - FIXED: Add UIElement for cleanup
 fn create_character_button(
     parent: &mut ChildBuilder,
     asset_handles: &AssetHandles,
@@ -728,53 +789,83 @@ fn create_character_button(
             animation_timer: 0.0,
             is_unlocked,
         },
+        UIElement {
+            element_type: UIElementType::Title,
+            animation: None,
+            is_visible: true,
+            layer: 100,
+        },
     )).with_children(|parent| {
         // Character preview (placeholder colored square)
-        parent.spawn(NodeBundle {
-            style: Style {
-                width: Val::Px(100.0),
-                height: Val::Px(100.0),
+        parent.spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Px(100.0),
+                    height: Val::Px(100.0),
+                    ..default()
+                },
+                background_color: if is_unlocked {
+                    Color::srgba(character.color[0], character.color[1], character.color[2], 1.0).into()
+                } else {
+                    Color::srgb(0.2, 0.2, 0.2).into()
+                },
                 ..default()
             },
-            background_color: if is_unlocked {
-                Color::srgba(character.color[0], character.color[1], character.color[2], 1.0).into()
-            } else {
-                Color::srgb(0.2, 0.2, 0.2).into()
+            UIElement {
+                element_type: UIElementType::Title,
+                animation: None,
+                is_visible: true,
+                layer: 100,
             },
-            ..default()
-        });
+        ));
 
         // Character name
-        parent.spawn(TextBundle::from_section(
-            &character.name,
-            TextStyle {
-                font: asset_handles.fonts.get("main_font").cloned().unwrap_or_default(),
-                font_size: 18.0,
-                color: if is_unlocked { Color::WHITE } else { Color::srgb(0.5, 0.5, 0.5) },
+        parent.spawn((
+            TextBundle::from_section(
+                &character.name,
+                TextStyle {
+                    font: asset_handles.fonts.get("main_font").cloned().unwrap_or_default(),
+                    font_size: 18.0,
+                    color: if is_unlocked { Color::WHITE } else { Color::srgb(0.5, 0.5, 0.5) },
+                },
+            ),
+            UIElement {
+                element_type: UIElementType::Title,
+                animation: None,
+                is_visible: true,
+                layer: 100,
             },
         ));
 
         // Status text
-        parent.spawn(TextBundle::from_section(
-            if is_unlocked {
-                if is_selected { "SELECTED" } else { "Available" }
-            } else {
-                "LOCKED"
-            },
-            TextStyle {
-                font: asset_handles.fonts.get("main_font").cloned().unwrap_or_default(),
-                font_size: 12.0,
-                color: if is_unlocked {
-                    if is_selected { Color::srgb(1.0, 1.0, 0.0) } else { Color::srgb(0.8, 0.8, 0.8) }
+        parent.spawn((
+            TextBundle::from_section(
+                if is_unlocked {
+                    if is_selected { "SELECTED" } else { "Available" }
                 } else {
-                    Color::srgb(0.4, 0.4, 0.4)
+                    "LOCKED"
                 },
+                TextStyle {
+                    font: asset_handles.fonts.get("main_font").cloned().unwrap_or_default(),
+                    font_size: 12.0,
+                    color: if is_unlocked {
+                        if is_selected { Color::srgb(1.0, 1.0, 0.0) } else { Color::srgb(0.8, 0.8, 0.8) }
+                    } else {
+                        Color::srgb(0.4, 0.4, 0.4)
+                    },
+                },
+            ),
+            UIElement {
+                element_type: UIElementType::Subtitle,
+                animation: None,
+                is_visible: true,
+                layer: 100,
             },
         ));
     });
 }
 
-/// Create a menu button with proper interaction (renamed to avoid conflict)
+/// Create a menu button with proper interaction (renamed to avoid conflict) - FIXED: Add UIElement for cleanup
 fn create_ui_menu_button(
     parent: &mut ChildBuilder,
     asset_handles: &AssetHandles,
@@ -802,13 +893,27 @@ fn create_ui_menu_button(
             hover_timer: 0.0,
             text: text.to_string(),
         },
+        UIElement {
+            element_type: UIElementType::Title,
+            animation: None,
+            is_visible: true,
+            layer: 100,
+        },
     )).with_children(|parent| {
-        parent.spawn(TextBundle::from_section(
-            text,
-            TextStyle {
-                font: asset_handles.fonts.get("main_font").cloned().unwrap_or_default(),
-                font_size: 20.0,
-                color: Color::WHITE,
+        parent.spawn((
+            TextBundle::from_section(
+                text,
+                TextStyle {
+                    font: asset_handles.fonts.get("main_font").cloned().unwrap_or_default(),
+                    font_size: 20.0,
+                    color: Color::WHITE,
+                },
+            ),
+            UIElement {
+                element_type: UIElementType::Title,
+                animation: None,
+                is_visible: true,
+                layer: 100,
             },
         ));
     });
@@ -862,7 +967,7 @@ pub fn animate_character_previews(
     }
 }
 
-/// Cleanup character selection screen
+/// Cleanup character selection screen - FIXED: Now properly cleans up UIElement components
 pub fn cleanup_character_selection(
     mut commands: Commands,
     query: Query<Entity, Or<(With<UIElement>, With<CharacterCard>, With<MenuButton>)>>,
@@ -871,6 +976,7 @@ pub fn cleanup_character_selection(
     for entity in query.iter() {
         commands.entity(entity).despawn_recursive();
     }
+    info!("Character selection screen cleanup complete");
 }
 
 // ===============================
