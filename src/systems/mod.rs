@@ -543,191 +543,278 @@ pub fn cleanup_home_screen(
 }
 
 // ===============================
-// CHARACTER SELECTION SYSTEMS
+// CHARACTER SELECTION SYSTEMS - FIXED
 // ===============================
 
-/// Setup character selection screen
+/// Setup character selection screen - FIXED: Create proper interactive UI
 pub fn setup_character_selection(
     mut commands: Commands,
     asset_handles: Res<AssetHandles>,
     character_selection: Res<CharacterSelection>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    info!("Setting up character selection screen");
+    info!("Setting up character selection screen with interactive UI");
     
-    // Background
-    commands.spawn((
-        SpriteBundle {
-            sprite: Sprite {
-                color: Color::srgb(0.05, 0.1, 0.15), // FIXED: rgb -> srgb
-                custom_size: Some(Vec2::new(crate::DEFAULT_WINDOW_WIDTH, crate::DEFAULT_WINDOW_HEIGHT)),
-                ..default()
-            },
-            transform: Transform::from_xyz(0.0, 0.0, -10.0),
+    // Main UI root node
+    commands.spawn(NodeBundle {
+        style: Style {
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            flex_direction: FlexDirection::Column,
+            justify_content: JustifyContent::SpaceBetween,
+            align_items: AlignItems::Center,
+            padding: UiRect::all(Val::Px(20.0)),
             ..default()
         },
-    ));
-    
-    // Title
-    commands.spawn((
-        TextBundle::from_section(
+        background_color: Color::srgb(0.05, 0.1, 0.15).into(),
+        ..default()
+    }).with_children(|parent| {
+        // Title
+        parent.spawn(TextBundle::from_section(
             "Choose Your Snake",
             TextStyle {
                 font: asset_handles.fonts.get("main_font").cloned().unwrap_or_default(),
                 font_size: 36.0,
-                color: Color::srgb(0.0, 1.0, 0.8), // FIXED: rgb -> srgb
+                color: Color::srgb(0.0, 1.0, 0.8),
             },
-        )
-        .with_style(Style {
-            position_type: PositionType::Absolute,
-            top: Val::Px(50.0),
-            left: Val::Px(50.0),
+        ));
+
+        // Character selection container
+        parent.spawn(NodeBundle {
+            style: Style {
+                width: Val::Percent(100.0),
+                height: Val::Px(400.0),
+                flex_direction: FlexDirection::Row,
+                justify_content: JustifyContent::SpaceEvenly,
+                align_items: AlignItems::Center,
+                ..default()
+            },
             ..default()
-        }),
-        UIElement {
-            element_type: UIElementType::Title,
-            animation: Some(UIAnimation {
-                animation_type: UIAnimationType::FadeIn,
-                timer: 0.0,
-                duration: 1.0,
-                loops: false,
-            }),
-            is_visible: true,
-            layer: 100,
-        },
-    ));
-    
-    // Create character cards
-    let card_positions = [
-        Vec2::new(200.0, 250.0),  // Character 1
-        Vec2::new(450.0, 250.0),  // Character 2
-        Vec2::new(700.0, 250.0),  // Character 3
-        Vec2::new(950.0, 250.0),  // Character 4
-    ];
-    
-    for (i, &pos) in card_positions.iter().enumerate() {
-        let character_id = (i + 1) as u32;
-        let character = &character_selection.characters[i];
-        let is_unlocked = character_selection.unlocked_characters[i];
-        
-        create_character_card(
-            &mut commands,
-            &asset_handles,
-            pos,
-            character,
-            is_unlocked,
-            character_id == character_selection.selected_character,
-            &mut meshes,
-            &mut materials,
-        );
-    }
-    
-    // Back button
-    spawn_menu_button(
-        &mut commands,
-        &asset_handles,
-        Vec2::new(100.0, 600.0),
-        "Back",
-        ButtonAction::QuitToMenu,
-        &mut meshes,
-        &mut materials,
-    );
-    
-    // Continue button
-    spawn_menu_button(
-        &mut commands,
-        &asset_handles,
-        Vec2::new(1000.0, 600.0),
-        "Start Adventure",
-        ButtonAction::StartGame,
-        &mut meshes,
-        &mut materials,
-    );
+        }).with_children(|parent| {
+            // Create character cards
+            for (i, character) in character_selection.characters.iter().enumerate() {
+                let character_id = (i + 1) as u32;
+                let is_unlocked = character_selection.unlocked_characters[i];
+                let is_selected = character_id == character_selection.selected_character;
+                
+                create_character_button(
+                    parent,
+                    &asset_handles,
+                    character,
+                    character_id,
+                    is_unlocked,
+                    is_selected,
+                );
+            }
+        });
+
+        // Selected character info
+        let selected_character = &character_selection.characters[(character_selection.selected_character - 1) as usize];
+        parent.spawn(NodeBundle {
+            style: Style {
+                width: Val::Percent(60.0),
+                height: Val::Px(100.0),
+                flex_direction: FlexDirection::Column,
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                padding: UiRect::all(Val::Px(20.0)),
+                ..default()
+            },
+            background_color: Color::srgba(0.2, 0.2, 0.3, 0.8).into(),
+            ..default()
+        }).with_children(|parent| {
+            parent.spawn(TextBundle::from_section(
+                &selected_character.name,
+                TextStyle {
+                    font: asset_handles.fonts.get("main_font").cloned().unwrap_or_default(),
+                    font_size: 24.0,
+                    color: Color::WHITE,
+                },
+            ));
+            
+            parent.spawn(TextBundle::from_section(
+                &selected_character.description,
+                TextStyle {
+                    font: asset_handles.fonts.get("main_font").cloned().unwrap_or_default(),
+                    font_size: 16.0,
+                    color: Color::srgb(0.8, 0.8, 0.8),
+                },
+            ));
+        });
+
+        // Bottom buttons container
+        parent.spawn(NodeBundle {
+            style: Style {
+                width: Val::Percent(100.0),
+                height: Val::Px(80.0),
+                flex_direction: FlexDirection::Row,
+                justify_content: JustifyContent::SpaceBetween,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            ..default()
+        }).with_children(|parent| {
+            // Back button
+            create_ui_menu_button(
+                parent,
+                &asset_handles,
+                "Back",
+                ButtonAction::QuitToMenu,
+                Color::srgb(0.6, 0.2, 0.2),
+            );
+
+            // Start Adventure button
+            create_ui_menu_button(
+                parent,
+                &asset_handles,
+                "Start Adventure",
+                ButtonAction::StartGame,
+                Color::srgb(0.2, 0.6, 0.2),
+            );
+        });
+    });
 }
 
-/// Create a character selection card
-fn create_character_card(
-    commands: &mut Commands,
+/// Create a character selection button with proper interaction
+fn create_character_button(
+    parent: &mut ChildBuilder,
     asset_handles: &AssetHandles,
-    position: Vec2,
     character: &CharacterDefinition,
+    character_id: u32,
     is_unlocked: bool,
     is_selected: bool,
-    meshes: &mut Assets<Mesh>,
-    materials: &mut Assets<ColorMaterial>,
 ) {
-    let card_color = if is_unlocked {
+    let button_color = if is_unlocked {
         if is_selected {
-            Color::srgba(character.color[0], character.color[1], character.color[2], 0.8) // FIXED: rgba -> srgba
+            Color::srgba(character.color[0], character.color[1], character.color[2], 0.8)
         } else {
-            Color::srgba(0.2, 0.2, 0.3, 0.8) // FIXED: rgba -> srgba
+            Color::srgba(0.2, 0.2, 0.3, 0.8)
         }
     } else {
-        Color::srgba(0.1, 0.1, 0.1, 0.8) // FIXED: rgba -> srgba
+        Color::srgba(0.1, 0.1, 0.1, 0.8)
     };
-    
-    let card_material = materials.add(ColorMaterial::from(card_color));
-    let card_mesh = meshes.add(Mesh::from(Rectangle::new(200.0, 300.0))); // FIXED: shape::Quad -> Rectangle
-    
-    // Card background
-    commands.spawn((
-        ColorMesh2dBundle { // FIXED: MaterialMesh2dBundle -> ColorMesh2dBundle
-            mesh: card_mesh.into(),
-            material: card_material,
-            transform: Transform::from_xyz(position.x, position.y, 1.0),
+
+    parent.spawn((
+        ButtonBundle {
+            style: Style {
+                width: Val::Px(200.0),
+                height: Val::Px(300.0),
+                flex_direction: FlexDirection::Column,
+                justify_content: JustifyContent::SpaceBetween,
+                align_items: AlignItems::Center,
+                padding: UiRect::all(Val::Px(10.0)),
+                border: UiRect::all(Val::Px(if is_selected { 3.0 } else { 1.0 })),
+                ..default()
+            },
+            background_color: button_color.into(),
+            border_color: if is_selected {
+                Color::srgb(1.0, 1.0, 0.0).into()
+            } else {
+                Color::srgb(0.5, 0.5, 0.5).into()
+            },
             ..default()
         },
+        MenuButton {
+            action: ButtonAction::SelectCharacter(character_id),
+            state: ButtonState::Normal,
+            hover_timer: 0.0,
+            text: character.name.clone(),
+        },
         CharacterCard {
-            character_id: character.id,
+            character_id,
             name: character.name.clone(),
             description: character.description.clone(),
-            color: Color::srgba(character.color[0], character.color[1], character.color[2], 1.0), // FIXED: rgba -> srgba
+            color: Color::srgba(character.color[0], character.color[1], character.color[2], 1.0),
             is_selected,
             animation_timer: 0.0,
             is_unlocked,
         },
-    ));
-    
-    // Character name
-    commands.spawn((
-        TextBundle::from_section(
+    )).with_children(|parent| {
+        // Character preview (placeholder colored square)
+        parent.spawn(NodeBundle {
+            style: Style {
+                width: Val::Px(100.0),
+                height: Val::Px(100.0),
+                ..default()
+            },
+            background_color: if is_unlocked {
+                Color::srgba(character.color[0], character.color[1], character.color[2], 1.0).into()
+            } else {
+                Color::srgb(0.2, 0.2, 0.2).into()
+            },
+            ..default()
+        });
+
+        // Character name
+        parent.spawn(TextBundle::from_section(
             &character.name,
             TextStyle {
                 font: asset_handles.fonts.get("main_font").cloned().unwrap_or_default(),
                 font_size: 18.0,
-                color: if is_unlocked { Color::WHITE } else { Color::srgb(0.5, 0.5, 0.5) }, // FIXED: GRAY -> srgb
+                color: if is_unlocked { Color::WHITE } else { Color::srgb(0.5, 0.5, 0.5) },
             },
-        )
-        .with_style(Style {
-            position_type: PositionType::Absolute,
-            top: Val::Px(position.y - 120.0),
-            left: Val::Px(position.x - 90.0),
-            ..default()
-        }),
-    ));
-    
-    // Character description
-    commands.spawn((
-        TextBundle::from_section(
-            if is_unlocked { &character.description } else { "LOCKED" },
+        ));
+
+        // Status text
+        parent.spawn(TextBundle::from_section(
+            if is_unlocked {
+                if is_selected { "SELECTED" } else { "Available" }
+            } else {
+                "LOCKED"
+            },
             TextStyle {
                 font: asset_handles.fonts.get("main_font").cloned().unwrap_or_default(),
                 font_size: 12.0,
-                color: if is_unlocked { Color::srgb(0.8, 0.8, 0.8) } else { Color::srgb(0.25, 0.25, 0.25) }, // FIXED: rgb -> srgb, DARK_GRAY -> srgb
+                color: if is_unlocked {
+                    if is_selected { Color::srgb(1.0, 1.0, 0.0) } else { Color::srgb(0.8, 0.8, 0.8) }
+                } else {
+                    Color::srgb(0.4, 0.4, 0.4)
+                },
             },
-        )
-        .with_style(Style {
-            position_type: PositionType::Absolute,
-            top: Val::Px(position.y + 80.0),
-            left: Val::Px(position.x - 90.0),
-            width: Val::Px(180.0),
-            ..default()
-        }),
-    ));
+        ));
+    });
 }
 
-/// Handle character selection input
+/// Create a menu button with proper interaction (renamed to avoid conflict)
+fn create_ui_menu_button(
+    parent: &mut ChildBuilder,
+    asset_handles: &AssetHandles,
+    text: &str,
+    action: ButtonAction,
+    color: Color,
+) {
+    parent.spawn((
+        ButtonBundle {
+            style: Style {
+                width: Val::Px(200.0),
+                height: Val::Px(50.0),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                border: UiRect::all(Val::Px(2.0)),
+                ..default()
+            },
+            background_color: color.into(),
+            border_color: Color::srgb(0.5, 0.5, 0.5).into(),
+            ..default()
+        },
+        MenuButton {
+            action,
+            state: ButtonState::Normal,
+            hover_timer: 0.0,
+            text: text.to_string(),
+        },
+    )).with_children(|parent| {
+        parent.spawn(TextBundle::from_section(
+            text,
+            TextStyle {
+                font: asset_handles.fonts.get("main_font").cloned().unwrap_or_default(),
+                font_size: 20.0,
+                color: Color::WHITE,
+            },
+        ));
+    });
+}
+
+/// Handle character selection input - REMOVED: This is now handled by the input module
 pub fn handle_character_selection_input(
     keyboard_input: Res<ButtonInput<KeyCode>>, // FIXED: Input -> ButtonInput
     mouse_input: Res<ButtonInput<MouseButton>>, // FIXED: Input -> ButtonInput
@@ -739,118 +826,10 @@ pub fn handle_character_selection_input(
     mut state_events: EventWriter<StateTransitionEvent>,
     mut play_sound_events: EventWriter<PlaySoundEvent>,
 ) {
-    // Handle keyboard input
-    if keyboard_input.just_pressed(KeyCode::Escape) {
-        info!("🔙 ESCAPE pressed - going back to home screen");
-        state_events.send(StateTransitionEvent::ToHomeScreen); // FIXED: Use correct variant
-        return;
-    }
-    
-    if keyboard_input.just_pressed(KeyCode::Enter) {
-        let selected_char = character_selection.selected_character;
-        info!("🎮 ENTER pressed - starting game with character {}", selected_char);
-        state_events.send(StateTransitionEvent::StartGame { // FIXED: Remove level parameter
-            character_id: selected_char
-        });
-        return;
-    }
-    
-    // Arrow key navigation
-    if keyboard_input.just_pressed(KeyCode::ArrowLeft) {
-        if character_selection.selected_character > 1 {
-            character_selection.selected_character -= 1;
-            info!("⬅️ Selected character: {}", character_selection.selected_character);
-            play_sound_events.send(PlaySoundEvent::new("menu_navigate"));
-        }
-    }
-    
-    if keyboard_input.just_pressed(KeyCode::ArrowRight) {
-        if character_selection.selected_character < 4 {
-            character_selection.selected_character += 1;
-            info!("➡️ Selected character: {}", character_selection.selected_character);
-            play_sound_events.send(PlaySoundEvent::new("menu_navigate"));
-        }
-    }
-    
-    // Handle mouse interaction
-    if let Ok(window) = windows.get_single() {
-        if let Some(cursor_pos) = window.cursor_position() {
-            info!("🖱️ Character select - Mouse cursor at: {:?}", cursor_pos);
-            
-            if let Ok((camera, camera_transform)) = camera_query.get_single() {
-                if let Some(world_pos) = camera.viewport_to_world_2d(camera_transform, cursor_pos) {
-                    info!("🌍 Character select - Mouse world position: {:?}", world_pos);
-                    
-                    let mut _clicked_character_id = None;
-                    
-                    // Check character card clicks and update selection states in one pass
-                    for (_entity, transform, mut card) in character_card_query.iter_mut() {
-                        let card_bounds = Rect::from_center_size(
-                            transform.translation.truncate(),
-                            Vec2::new(200.0, 300.0)
-                        );
-                        
-                        info!("🃏 Character card '{}' at: {:?}, bounds: {:?}", 
-                              card.name, transform.translation.truncate(), card_bounds);
-                        
-                        // First check if this card was clicked
-                        if card.is_unlocked {
-                            if card_bounds.contains(world_pos) {
-                                info!("✅ Character card '{}' is HOVERED!", card.name);
-                                
-                                if mouse_input.just_pressed(MouseButton::Left) {
-                                    info!("🖱️ Character card '{}' was CLICKED!", card.name);
-                                    character_selection.selected_character = card.character_id;
-                                    _clicked_character_id = Some(card.character_id);
-                                    play_sound_events.send(PlaySoundEvent::new("menu_select"));
-                                }
-                            }
-                        }
-                        
-                        // Update selection state for all cards
-                        card.is_selected = card.character_id == character_selection.selected_character;
-                    }
-                    
-                    // Check button clicks (reuse home screen button logic)
-                    for (_entity, transform, mut button) in button_query.iter_mut() {
-                        let button_bounds = Rect::from_center_size(
-                            transform.translation.truncate(),
-                            Vec2::new(180.0, 50.0)
-                        );
-                        
-                        info!("🔘 Character select button '{}' at: {:?}, bounds: {:?}", 
-                              button.text, transform.translation.truncate(), button_bounds);
-                        
-                        if button_bounds.contains(world_pos) && mouse_input.just_pressed(MouseButton::Left) {
-                            info!("🖱️ Character select button '{}' was CLICKED!", button.text);
-                            play_sound_events.send(PlaySoundEvent::new("menu_select"));
-                            
-                            match &button.action {
-                                ButtonAction::StartGame => {
-                                    let selected_char = character_selection.selected_character;
-                                    info!("🚀 Start Adventure clicked - character {}", selected_char);
-                                    state_events.send(StateTransitionEvent::StartGame { // FIXED: Remove level parameter
-                                        character_id: selected_char
-                                    });
-                                },
-                                ButtonAction::QuitToMenu => {
-                                    info!("🔙 Back button clicked");
-                                    state_events.send(StateTransitionEvent::ToHomeScreen); // FIXED: Use correct variant
-                                },
-                                _ => {
-                                    info!("❓ Unknown button action: {:?}", button.action);
-                                },
-                            }
-                        }
-                    }
-                } else {
-                    warn!("❌ Could not convert cursor position to world coordinates");
-                }
-            } else {
-                warn!("❌ Could not get camera for coordinate conversion");
-            }
-        }
-    }
+    // This function is now replaced by the one in input.rs
+    // Keeping it here as a placeholder to avoid compilation errors
+    // The actual input handling is done by the input module
+    info!("Character selection input handled by input module");
 }
 
 /// Update character card animations
