@@ -3,9 +3,11 @@ use macroquad::prelude::*;
 mod grid;
 mod effects;
 mod snake;
+mod food;
 
 use effects::GhostSnake;
 use snake::Snake;
+use food::Food;
 
 enum GameState {
     Title,
@@ -17,13 +19,12 @@ enum GameState {
 async fn main() {
     let mut state = GameState::Title;
 
-    // Animated ghost snakes for title screen
     let mut ghost_snakes = (0..18)
         .map(|_| GhostSnake::new_random(screen_width(), screen_height()))
         .collect::<Vec<_>>();
 
-    // Main player-controlled snake
     let mut snake = Snake::new();
+    let mut food = Food::new(&snake);
 
     loop {
         clear_background(BLACK);
@@ -38,15 +39,25 @@ async fn main() {
                 draw_title_screen();
 
                 if is_key_pressed(KeyCode::Enter) {
-                    snake = Snake::new(); // Reset snake on start
+                    snake = Snake::new();
+                    food = Food::new(&snake);
                     state = GameState::Playing;
                 }
             }
 
             GameState::Playing => {
                 grid::draw_grid();
+
                 snake.update();
                 snake.draw();
+
+                food.draw();
+
+                // Check for collision with food
+                if snake.position == food.position {
+                    snake.grow();
+                    food = Food::new(&snake);
+                }
 
                 if is_key_pressed(KeyCode::Escape) {
                     state = GameState::GameOver;
@@ -99,6 +110,7 @@ fn draw_title_screen() {
         GRAY,
     );
 }
+
 
 
 
