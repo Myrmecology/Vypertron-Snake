@@ -4,10 +4,12 @@ mod grid;
 mod effects;
 mod snake;
 mod food;
+mod score;
 
 use effects::GhostSnake;
 use snake::Snake;
 use food::Food;
+use score::Score;
 
 enum GameState {
     Title,
@@ -25,6 +27,7 @@ async fn main() {
 
     let mut snake = Snake::new();
     let mut food = Food::new(&snake);
+    let mut score = Score::new();
 
     loop {
         clear_background(BLACK);
@@ -41,6 +44,7 @@ async fn main() {
                 if is_key_pressed(KeyCode::Enter) {
                     snake = Snake::new();
                     food = Food::new(&snake);
+                    score.reset();
                     state = GameState::Playing;
                 }
             }
@@ -50,10 +54,12 @@ async fn main() {
                 snake.update();
                 snake.draw();
                 food.draw();
+                score.draw();
 
                 if snake.position == food.position {
                     snake.grow();
                     food = Food::new(&snake);
+                    score.add(1);
                 }
 
                 if snake.is_dead() {
@@ -68,6 +74,9 @@ async fn main() {
             GameState::GameOver => {
                 draw_text("Game Over", 100.0, 200.0, 40.0, RED);
                 draw_text("Press R to restart", 100.0, 250.0, 28.0, WHITE);
+
+                let final_score = format!("Final Score: {}", score.value);
+                draw_text(&final_score, 100.0, 300.0, 28.0, YELLOW);
 
                 if is_key_pressed(KeyCode::R) {
                     state = GameState::Title;
@@ -111,6 +120,7 @@ fn draw_title_screen() {
         GRAY,
     );
 }
+
 
 
 
