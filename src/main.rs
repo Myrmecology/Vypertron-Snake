@@ -1,65 +1,107 @@
-use bevy::prelude::*;
-use bevy::window::{WindowResolution};
-use vypertron_snake::GamePlugin;
+use macroquad::prelude::*;
 
-#[cfg(not(target_arch = "wasm32"))]
-mod desktop {
-    use super::*;
+mod grid;
+mod effects;
+mod snake;
 
-    pub fn configure_desktop_settings(_app: &mut App) {
-        // Add platform-specific setup here (e.g., set app icon)
-        vypertron_snake::desktop::init();
+use effects::GhostSnake;
+use snake::Snake;
+
+enum GameState {
+    Title,
+    Playing,
+    GameOver,
+}
+
+#[macroquad::main("Vypertron-Snake")]
+async fn main() {
+    let mut state = GameState::Title;
+
+    // Animated ghost snakes for title screen
+    let mut ghost_snakes = (0..18)
+        .map(|_| GhostSnake::new_random(screen_width(), screen_height()))
+        .collect::<Vec<_>>();
+
+    // Main player-controlled snake
+    let mut snake = Snake::new();
+
+    loop {
+        clear_background(BLACK);
+
+        match state {
+            GameState::Title => {
+                for ghost in &mut ghost_snakes {
+                    ghost.update();
+                    ghost.draw();
+                }
+
+                draw_title_screen();
+
+                if is_key_pressed(KeyCode::Enter) {
+                    snake = Snake::new(); // Reset snake on start
+                    state = GameState::Playing;
+                }
+            }
+
+            GameState::Playing => {
+                grid::draw_grid();
+                snake.update();
+                snake.draw();
+
+                if is_key_pressed(KeyCode::Escape) {
+                    state = GameState::GameOver;
+                }
+            }
+
+            GameState::GameOver => {
+                draw_text("Game Over", 100.0, 200.0, 40.0, RED);
+                draw_text("Press R to restart", 100.0, 250.0, 28.0, WHITE);
+
+                if is_key_pressed(KeyCode::R) {
+                    state = GameState::Title;
+                }
+            }
+        }
+
+        next_frame().await;
     }
 }
 
-#[cfg(target_arch = "wasm32")]
-mod web {
-    use wasm_bindgen::prelude::*;
-    use console_error_panic_hook;
+fn draw_title_screen() {
+    let time = get_time() as f32;
+    let pulse = (time.sin() * 0.5 + 0.5) * 0.5 + 0.5;
 
-    #[wasm_bindgen(start)]
-    pub fn run() {
-        console_error_panic_hook::set_once();
-        crate::main();
-    }
+    let title_font_size = 64.0;
+    let prompt_font_size = 28.0;
+
+    let title_text = "VYPERTRON-SNAKE";
+    let prompt_text = "Press ENTER to start";
+
+    let title_width = measure_text(title_text, None, title_font_size as u16, 1.0).width;
+    let prompt_width = measure_text(prompt_text, None, prompt_font_size as u16, 1.0).width;
+
+    let screen_w = screen_width();
+    let screen_h = screen_height();
+
+    draw_text(
+        title_text,
+        (screen_w - title_width) / 2.0,
+        screen_h * 0.4,
+        title_font_size,
+        Color::new(pulse, 1.0 - pulse * 0.3, pulse * 0.1, 1.0),
+    );
+
+    draw_text(
+        prompt_text,
+        (screen_w - prompt_width) / 2.0,
+        screen_h * 0.5,
+        prompt_font_size,
+        GRAY,
+    );
 }
 
-fn main() {
-    #[cfg(target_arch = "wasm32")]
-    web::run();
 
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        let mut app = App::new();
 
-        // Desktop-specific init
-        desktop::configure_desktop_settings(&mut app);
 
-        app.insert_resource(ClearColor(Color::srgb(0.1, 0.1, 0.15))) // FIXED: rgb -> srgb
-            .insert_resource(bevy::audio::GlobalVolume::new(0.7))
-            .add_plugins(
-                DefaultPlugins
-                    .set(WindowPlugin {
-                        primary_window: Some(Window {
-                            title: "🐍⚡ Vypertron-Snake - Premium Snake Experience".into(),
-                            resolution: WindowResolution::new(1200.0, 800.0),
-                            // FIXED: Removed 'theme' field - not available in Bevy 0.14
-                            resizable: true,
-                            canvas: None, // only used on web
-                            fit_canvas_to_parent: true,
-                            prevent_default_event_handling: false,
-                            ..default()
-                        }),
-                        ..default()
-                    })
-                    .set(ImagePlugin::default_nearest())
-                    .set(AssetPlugin {
-                        file_path: "assets".into(), // FIXED: asset_folder -> file_path
-                        ..default()
-                    }),
-            )
-            .add_plugins(GamePlugin)
-            .run();
-    }
-}
+
 
