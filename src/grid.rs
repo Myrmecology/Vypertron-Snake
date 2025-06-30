@@ -1,27 +1,26 @@
 use macroquad::prelude::*;
-use crate::themes::Theme;
 
-// Grid size constants
-pub const GRID_WIDTH: i32 = 20;
-pub const GRID_HEIGHT: i32 = 20;
-pub const CELL_SIZE: f32 = 32.0;
+pub const GRID_WIDTH: i32 = 30;
+pub const GRID_HEIGHT: i32 = 25;
+pub const CELL_SIZE: f32 = 20.0;
 
 pub fn get_offset() -> Vec2 {
-    let screen_w = screen_width();
-    let screen_h = screen_height();
+    let screen_width = screen_width();
+    let screen_height = screen_height();
 
-    let grid_w = GRID_WIDTH as f32 * CELL_SIZE;
-    let grid_h = GRID_HEIGHT as f32 * CELL_SIZE;
+    let grid_pixel_width = GRID_WIDTH as f32 * CELL_SIZE;
+    let grid_pixel_height = GRID_HEIGHT as f32 * CELL_SIZE;
 
-    Vec2::new(
-        (screen_w - grid_w) / 2.0,
-        (screen_h - grid_h) / 2.0,
-    )
+    let offset_x = (screen_width - grid_pixel_width) / 2.0;
+    let offset_y = (screen_height - grid_pixel_height) / 2.0 + 40.0; // Added offset for UI elements
+
+    vec2(offset_x, offset_y)
 }
 
 pub fn draw_grid(color: Color) {
     let offset = get_offset();
 
+    // Draw grid lines with the specified color
     for x in 0..=GRID_WIDTH {
         draw_line(
             offset.x + x as f32 * CELL_SIZE,
@@ -43,6 +42,23 @@ pub fn draw_grid(color: Color) {
             color,
         );
     }
+
+    // Draw border around the grid for better visibility
+    draw_rectangle_lines(
+        offset.x - 2.0,
+        offset.y - 2.0,
+        GRID_WIDTH as f32 * CELL_SIZE + 4.0,
+        GRID_HEIGHT as f32 * CELL_SIZE + 4.0,
+        2.0,
+        color,
+    );
 }
+
+pub fn is_within_grid(x: i32, y: i32) -> bool {
+    x >= 0 && x < GRID_WIDTH && y >= 0 && y < GRID_HEIGHT
+}
+
+
+
 
 

@@ -1,58 +1,136 @@
 use macroquad::prelude::*;
+use ::rand::{Rng, thread_rng};
+use crate::grid::{GRID_WIDTH, GRID_HEIGHT, CELL_SIZE, get_offset};
+use crate::snake::Segment;
 
-/// Represents a glowing, moving background snake segment
-pub struct GhostSnake {
-    pub pos: Vec2,
-    pub direction: Vec2,
-    pub speed: f32,
+use lazy_static::lazy_static;
+use std::sync::Mutex;
+
+const SNAKE_COUNT: usize = 5;
+const MAX_LENGTH: usize = 25;
+
+#[derive(Clone)]
+pub struct MovingSnake {
+    pub body: Vec<Segment>,
     pub color: Color,
+    pub direction: Direction,
+    pub timer: f32,
+    pub delay: f32,
 }
 
-impl GhostSnake {
-    pub fn new_random(screen_w: f32, screen_h: f32) -> Self {
-        let mut rng = ::rand::thread_rng();
+#[derive(Clone, Copy)]
+pub enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
 
-        let pos = vec2(
-            ::rand::Rng::gen_range(&mut rng, 0.0..screen_w),
-            ::rand::Rng::gen_range(&mut rng, 0.0..screen_h),
-        );
-
-        let angle = ::rand::Rng::gen_range(&mut rng, 0.0..std::f32::consts::TAU);
-        let direction = vec2(angle.cos(), angle.sin());
-
-        let speed = ::rand::Rng::gen_range(&mut rng, 1.0..2.5);
+impl MovingSnake {
+    pub fn new() -> Self {
+        let mut rng = thread_rng();
+        let start_x = rng.gen_range(0..GRID_WIDTH as i32);
+        let start_y = rng.gen_range(0..GRID_HEIGHT as i32);
 
         let color = Color::new(
-            ::rand::Rng::gen_range(&mut rng, 0.2..1.0),
-            ::rand::Rng::gen_range(&mut rng, 0.2..1.0),
-            ::rand::Rng::gen_range(&mut rng, 0.2..1.0),
-            0.35,
+            rng.gen_range(0.5..1.0),
+            rng.gen_range(0.5..1.0),
+            rng.gen_range(0.5..1.0),
+            1.0,
         );
 
+        let dir = match rng.gen_range(0..4) {
+            0 => Direction::Up,
+            1 => Direction::Down,
+            2 => Direction::Left,
+            _ => Direction::Right,
+        };
+
         Self {
-            pos,
-            direction,
-            speed,
+            body: vec![Segment { x: start_x, y: start_y }],
             color,
+            direction: dir,
+            timer: 0.0,
+            delay: rng.gen_range(0.08..0.15),
         }
     }
 
     pub fn update(&mut self) {
-        self.pos += self.direction * self.speed;
+        self.timer += get_frame_time();
+        if self.timer < self.delay {
+            return;
+        }
+        self.timer = 0.0;
 
-        let screen_w = screen_width();
-        let screen_h = screen_height();
+        let mut new_head = self.body[0];
+        match self.direction {
+            Direction::Up => new_head.y -= 1,
+            Direction::Down => new_head.y += 1,
+            Direction::Left => new_head.x -= 1,
+            Direction::Right => new_head.x += 1,
+        }
 
-        if self.pos.x > screen_w { self.pos.x = 0.0; }
-        if self.pos.y > screen_h { self.pos.y = 0.0; }
-        if self.pos.x < 0.0 { self.pos.x = screen_w; }
-        if self.pos.y < 0.0 { self.pos.y = screen_h; }
+        // Wrap around
+        if new_head.x < 0 {
+            new_head.x = GRID_WIDTH as i32 - 1;
+        } else if new_head.x >= GRID_WIDTH as i32 {
+            new_head.x = 0;
+        }
+
+        if new_head.y < 0 {
+            new_head.y = GRID_HEIGHT as i32 - 1;
+        } else if new_head.y >= GRID_HEIGHT as i32 {
+            new_head.y = 0;
+        }
+
+        self.body.insert(0, new_head);
+        if self.body.len() > MAX_LENGTH {
+            self.body.pop();
+        }
     }
 
     pub fn draw(&self) {
-        draw_circle(self.pos.x, self.pos.y, 6.0, self.color);
+        let offset = get_offset();
+        for segment in &self.body {
+            draw_rectangle(
+                offset.x + segment.x as f32 * CELL_SIZE,
+                offset.y + segment.y as f32 * CELL_SIZE,
+                CELL_SIZE,
+                CELL_SIZE,
+                self.color,
+            );
+        }
     }
 }
+
+lazy_static! {
+    pub static ref MOVING_SNAKES: Mutex<Vec<MovingSnake>> = Mutex::new(Vec::new());
+}
+
+pub fn update_moving_snakes() {
+    let mut snakes = MOVING_SNAKES.lock().unwrap();
+
+    if snakes.len() < SNAKE_COUNT {
+        snakes.push(MovingSnake::new());
+    }
+
+    for snake in snakes.iter_mut() {
+        snake.update();
+    }
+}
+
+pub fn draw_moving_snakes() {
+    let snakes = MOVING_SNAKES.lock().unwrap();
+    for snake in snakes.iter() {
+        snake.draw();
+    }
+}
+
+
+
+
+
+
 
 
 

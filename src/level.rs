@@ -1,28 +1,50 @@
-use macroquad::prelude::*; // Needed for draw_text and LIGHTGRAY
+use macroquad::prelude::*;
 
-pub struct Level {
-    pub number: u32,
-    pub speed: f32,
+pub struct LevelTracker {
+    pub level: usize,
+    pub score: usize,
+    pub score_to_next: usize,
+    pub in_game: bool,
 }
 
-impl Level {
+impl LevelTracker {
     pub fn new() -> Self {
         Self {
-            number: 1,
-            speed: 0.15, // Base snake movement delay
+            level: 1,
+            score: 0,
+            score_to_next: 5,
+            in_game: false,
         }
     }
 
-    pub fn update(&mut self, score: u32) {
-        self.number = score / 5 + 1;
+    pub fn increase_score(&mut self) {
+        self.score += 1;
+        if self.score >= self.score_to_next {
+            self.level += 1;
+            self.score_to_next += 5;
+        }
+    }
 
-        // Each level slightly increases the speed (caps at 0.05)
-        self.speed = 0.15_f32.max(0.15 - (self.number - 1) as f32 * 0.01);
+    pub fn next_level(&mut self) {
+        self.level += 1;
+        self.score = 0;
+        self.score_to_next += 5;
+    }
+
+    pub fn reset(&mut self) {
+        self.level = 1;
+        self.score = 0;
+        self.score_to_next = 5;
+        self.in_game = false;
     }
 
     pub fn draw(&self) {
-        let text = format!("Level: {}", self.number);
+        let text = format!("Level: {}  Score: {}", self.level, self.score);
         draw_text(&text, 20.0, 70.0, 28.0, LIGHTGRAY);
     }
 }
+
+
+
+
 
