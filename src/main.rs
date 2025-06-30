@@ -102,20 +102,24 @@ async fn main() {
                 let score_text = format!("TAILS: {}", score);
                 draw_text(&score_text, 20.0, 30.0, 24.0, theme.ui_text);
                 
-                // Draw speed indicator
-                let speed = 1.0 + (level_tracker.level - 1) as f32 * 0.1;
-                let speed_text = format!("SPEED: {:.1}x", speed);
+                // Draw speed indicator (using actual speed calculation)
+                let speed_factor = 1.0 + (level_tracker.level as f32 - 1.0).ln().max(0.0) * 0.3;
+                let speed_text = format!("SPEED: {:.1}x", speed_factor);
                 let speed_width = measure_text(&speed_text, None, 24, 1.0).width;
                 draw_text(&speed_text, screen_width() - speed_width - 20.0, 30.0, 24.0, theme.ui_text);
 
                 // Draw grid with theme color
                 draw_grid(theme.grid);
 
+                // Update snake speed based on level
+                snake.update_speed(level_tracker.level);
+
                 let delta_time = get_frame_time();
                 snake.update(delta_time);
                 cpu_snake.update(level_tracker.level);
 
-                if snake.is_dead() || cpu_snake.check_collision(&snake) {
+                // Only check if player snake is dead (removed CPU collision check)
+                if snake.is_dead() {
                     level_tracker.in_game = false;
                 }
 

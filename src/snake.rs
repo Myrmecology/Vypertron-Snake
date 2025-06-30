@@ -136,7 +136,6 @@ impl Snake {
         self.head()
     }
 
-    // Additional utility methods
     pub fn length(&self) -> usize {
         self.body.len()
     }
@@ -150,6 +149,22 @@ impl Snake {
         self.dir = Direction::Right;
         self.grow_tail = false;
         self.move_timer = 0.0;
+        self.move_delay = 0.15; // Reset to base speed
+    }
+
+    // New method for updating speed based on level
+    pub fn update_speed(&mut self, level: usize) {
+        // Base delay is 0.15, minimum delay is 0.05 (3x faster)
+        // Using a logarithmic curve for smooth progression
+        let base_delay = 0.15;
+        let min_delay = 0.05;
+        
+        // Calculate speed multiplier using logarithmic scaling
+        // This gives rapid increase early on, then slower increases
+        let speed_factor = 1.0 + (level as f32 - 1.0).ln().max(0.0) * 0.3;
+        
+        // Calculate new delay (inverse of speed)
+        self.move_delay = (base_delay / speed_factor).max(min_delay);
     }
 }
 
