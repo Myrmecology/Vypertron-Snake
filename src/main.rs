@@ -5,11 +5,13 @@ mod effects;
 mod snake;
 mod food;
 mod score;
+mod level;
 
 use effects::GhostSnake;
 use snake::Snake;
 use food::Food;
 use score::Score;
+use level::Level;
 
 enum GameState {
     Title,
@@ -28,6 +30,7 @@ async fn main() {
     let mut snake = Snake::new();
     let mut food = Food::new(&snake);
     let mut score = Score::new();
+    let mut level = Level::new();
 
     loop {
         clear_background(BLACK);
@@ -45,16 +48,22 @@ async fn main() {
                     snake = Snake::new();
                     food = Food::new(&snake);
                     score.reset();
+                    level = Level::new();
                     state = GameState::Playing;
                 }
             }
 
             GameState::Playing => {
                 grid::draw_grid();
+
+                level.update(score.value);
+                snake.move_delay = level.speed;
+
                 snake.update();
                 snake.draw();
                 food.draw();
                 score.draw();
+                level.draw();
 
                 if snake.position == food.position {
                     snake.grow();
@@ -120,6 +129,7 @@ fn draw_title_screen() {
         GRAY,
     );
 }
+
 
 
 
