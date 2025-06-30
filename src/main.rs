@@ -47,16 +47,17 @@ async fn main() {
 
             GameState::Playing => {
                 grid::draw_grid();
-
                 snake.update();
                 snake.draw();
-
                 food.draw();
 
-                // Check for collision with food
                 if snake.position == food.position {
                     snake.grow();
                     food = Food::new(&snake);
+                }
+
+                if snake.is_dead() {
+                    state = GameState::GameOver;
                 }
 
                 if is_key_pressed(KeyCode::Escape) {
@@ -110,6 +111,7 @@ fn draw_title_screen() {
         GRAY,
     );
 }
+
 
 
 
