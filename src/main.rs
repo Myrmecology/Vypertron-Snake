@@ -6,12 +6,14 @@ mod snake;
 mod food;
 mod score;
 mod level;
+mod themes;
 
 use effects::GhostSnake;
 use snake::Snake;
 use food::Food;
 use score::Score;
 use level::Level;
+use themes::{Theme, get_theme};
 
 enum GameState {
     Title,
@@ -33,7 +35,9 @@ async fn main() {
     let mut level = Level::new();
 
     loop {
-        clear_background(BLACK);
+        // Load theme based on current level
+        let theme: Theme = get_theme(level.number);
+        clear_background(theme.background);
 
         match state {
             GameState::Title => {
@@ -54,14 +58,16 @@ async fn main() {
             }
 
             GameState::Playing => {
-                grid::draw_grid();
-
                 level.update(score.value);
                 snake.move_delay = level.speed;
 
+                grid::draw_grid(theme.grid);
+
                 snake.update();
-                snake.draw();
-                food.draw();
+                snake.draw(&theme);
+
+                food.draw(&theme);
+
                 score.draw();
                 level.draw();
 
@@ -129,6 +135,7 @@ fn draw_title_screen() {
         GRAY,
     );
 }
+
 
 
 

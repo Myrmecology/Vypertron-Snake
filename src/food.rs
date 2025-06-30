@@ -1,37 +1,42 @@
 use macroquad::prelude::*;
-use crate::grid::{CELL_SIZE, GRID_WIDTH, GRID_HEIGHT, get_offset};
-use crate::snake::Snake;
+use ::rand::Rng;
+use ::rand::thread_rng;
+use crate::grid::{GRID_WIDTH, GRID_HEIGHT, CELL_SIZE, get_offset};
+use crate::snake::{Snake, Segment};
+use crate::themes::Theme;
 
 pub struct Food {
-    pub position: IVec2,
+    pub position: Segment,
 }
 
 impl Food {
     pub fn new(snake: &Snake) -> Self {
-        let mut rng = ::rand::thread_rng();
-        let mut pos;
+        let mut rng = thread_rng();
 
-        // Keep retrying until it spawns in a free cell
         loop {
-            pos = IVec2::new(
-                ::rand::Rng::gen_range(&mut rng, 0..GRID_WIDTH),
-                ::rand::Rng::gen_range(&mut rng, 0..GRID_HEIGHT),
-            );
+            let pos = Segment {
+                x: rng.gen_range(0..GRID_WIDTH),
+                y: rng.gen_range(0..GRID_HEIGHT),
+            };
 
             if !snake.is_at(pos) {
-                break;
+                return Self { position: pos };
             }
         }
-
-        Self { position: pos }
     }
 
-    pub fn draw(&self) {
+    pub fn draw(&self, theme: &Theme) {
         let offset = get_offset();
-        let px = self.position.x as f32 * CELL_SIZE + offset.x;
-        let py = self.position.y as f32 * CELL_SIZE + offset.y;
 
-        draw_rectangle(px, py, CELL_SIZE, CELL_SIZE, RED);
-        draw_rectangle_lines(px, py, CELL_SIZE, CELL_SIZE, 1.5, ORANGE);
+        draw_rectangle(
+            offset.x + self.position.x as f32 * CELL_SIZE,
+            offset.y + self.position.y as f32 * CELL_SIZE,
+            CELL_SIZE,
+            CELL_SIZE,
+            theme.food,
+        );
     }
 }
+
+
+

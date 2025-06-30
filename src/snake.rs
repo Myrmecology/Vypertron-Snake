@@ -1,109 +1,123 @@
 use macroquad::prelude::*;
-use crate::grid::{CELL_SIZE, GRID_WIDTH, GRID_HEIGHT, get_offset};
+use crate::grid::{GRID_WIDTH, GRID_HEIGHT, CELL_SIZE, get_offset};
+use crate::themes::Theme;
+
+#[derive(Clone, Copy, PartialEq)]
+pub struct Segment {
+    pub x: i32,
+    pub y: i32,
+}
+
+#[derive(PartialEq)]
+pub enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
 
 pub struct Snake {
-    pub position: IVec2,
-    pub direction: IVec2,
+    pub body: Vec<Segment>,
+    pub dir: Direction,
+    pub grow_tail: bool,
     pub move_timer: f32,
     pub move_delay: f32,
-    pub body: Vec<IVec2>,
-    pub grow_next_move: bool,
-    pub is_dead: bool,
+    pub position: Segment,
 }
 
 impl Snake {
     pub fn new() -> Self {
+        let start_x = GRID_WIDTH / 2;
+        let start_y = GRID_HEIGHT / 2;
+
         Self {
-            position: IVec2::new(GRID_WIDTH / 2, GRID_HEIGHT / 2),
-            direction: IVec2::new(1, 0),
+            body: vec![Segment { x: start_x, y: start_y }],
+            dir: Direction::Right,
+            grow_tail: false,
             move_timer: 0.0,
             move_delay: 0.15,
-            body: vec![],
-            grow_next_move: false,
-            is_dead: false,
+            position: Segment { x: start_x, y: start_y },
         }
     }
 
     pub fn update(&mut self) {
-        if self.is_dead {
-            return;
-        }
-
-        // Handle input
-        if is_key_pressed(KeyCode::Right) && self.direction != IVec2::new(-1, 0) {
-            self.direction = IVec2::new(1, 0);
-        }
-        if is_key_pressed(KeyCode::Left) && self.direction != IVec2::new(1, 0) {
-            self.direction = IVec2::new(-1, 0);
-        }
-        if is_key_pressed(KeyCode::Up) && self.direction != IVec2::new(0, 1) {
-            self.direction = IVec2::new(0, -1);
-        }
-        if is_key_pressed(KeyCode::Down) && self.direction != IVec2::new(0, -1) {
-            self.direction = IVec2::new(0, 1);
-        }
+        self.handle_input();
 
         self.move_timer += get_frame_time();
         if self.move_timer >= self.move_delay {
             self.move_timer = 0.0;
 
-            // Insert head position into body
-            self.body.insert(0, self.position);
+            let mut new_head = self.body[0];
 
-            if !self.grow_next_move && !self.body.is_empty() {
+            match self.dir {
+                Direction::Up => new_head.y -= 1,
+                Direction::Down => new_head.y += 1,
+                Direction::Left => new_head.x -= 1,
+                Direction::Right => new_head.x += 1,
+            }
+
+            self.position = new_head;
+
+            self.body.insert(0, new_head);
+
+            if !self.grow_tail {
                 self.body.pop();
             } else {
-                self.grow_next_move = false;
+                self.grow_tail = false;
             }
+        }
+    }
 
-            let new_pos = self.position + self.direction;
+    pub fn draw(&self, theme: &Theme) {
+        let offset = get_offset();
 
-            // Check bounds
-            if new_pos.x < 0 || new_pos.x >= GRID_WIDTH || new_pos.y < 0 || new_pos.y >= GRID_HEIGHT {
-                self.is_dead = true;
-                return;
-            }
+        for (i, segment) in self.body.iter().enumerate() {
+            let color = if i == 0 { theme.snake_head } else { theme.snake_body };
 
-            // Check self-collision
-            if self.body.contains(&new_pos) {
-                self.is_dead = true;
-                return;
-            }
-
-            self.position = new_pos;
+            draw_rectangle(
+                offset.x + segment.x as f32 * CELL_SIZE,
+                offset.y + segment.y as f32 * CELL_SIZE,
+                CELL_SIZE,
+                CELL_SIZE,
+                color,
+            );
         }
     }
 
     pub fn grow(&mut self) {
-        self.grow_next_move = true;
+        self.grow_tail = true;
     }
 
-    pub fn draw(&self) {
-        let offset = get_offset();
-
-        // Body
-        for (i, segment) in self.body.iter().enumerate() {
-            let px = segment.x as f32 * CELL_SIZE + offset.x;
-            let py = segment.y as f32 * CELL_SIZE + offset.y;
-            let shade = 0.5 + (i as f32 / self.body.len().max(1) as f32) * 0.5;
-            draw_rectangle(px, py, CELL_SIZE, CELL_SIZE, Color::new(0.0, shade, 0.0, 1.0));
+    pub fn handle_input(&mut self) {
+        if is_key_pressed(KeyCode::Up) && self.dir != Direction::Down {
+            self.dir = Direction::Up;
+        } else if is_key_pressed(KeyCode::Down) && self.dir != Direction::Up {
+            self.dir = Direction::Down;
+        } else if is_key_pressed(KeyCode::Left) && self.dir != Direction::Right {
+            self.dir = Direction::Left;
+        } else if is_key_pressed(KeyCode::Right) && self.dir != Direction::Left {
+            self.dir = Direction::Right;
         }
-
-        // Head
-        let hx = self.position.x as f32 * CELL_SIZE + offset.x;
-        let hy = self.position.y as f32 * CELL_SIZE + offset.y;
-        draw_rectangle(hx, hy, CELL_SIZE, CELL_SIZE, GREEN);
-        draw_rectangle_lines(hx, hy, CELL_SIZE, CELL_SIZE, 2.0, WHITE);
-    }
-
-    pub fn is_at(&self, pos: IVec2) -> bool {
-        self.position == pos || self.body.contains(&pos)
     }
 
     pub fn is_dead(&self) -> bool {
-        self.is_dead
+        let head = self.body[0];
+
+        // Check wall collision
+        if head.x < 0 || head.x >= GRID_WIDTH || head.y < 0 || head.y >= GRID_HEIGHT {
+            return true;
+        }
+
+        // Check self collision
+        self.body[1..].contains(&head)
+    }
+
+    pub fn is_at(&self, segment: Segment) -> bool {
+        self.body.contains(&segment)
     }
 }
+
+
 
 
 
