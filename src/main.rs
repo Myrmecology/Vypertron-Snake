@@ -1,5 +1,5 @@
 use macroquad::prelude::*;
-use macroquad::audio::{load_sound, play_sound, set_sound_volume, PlaySoundParams};
+use macroquad::audio::{load_sound, play_sound, stop_sound, PlaySoundParams};
 use grid::draw_grid;
 use snake::Snake;
 use food::Food;
@@ -159,9 +159,9 @@ async fn main() {
                     level_tracker.in_game = true;
                     score = 0;
                     
-                    // Mute title music and start game music
+                    // Stop title music and start game music
                     if let Some(music) = &title_music {
-                        set_sound_volume(music, 0.0);  // Mute title music
+                        stop_sound(music);  // Stop title music completely
                     }
                     title_music_playing = false;
                     
@@ -213,15 +213,12 @@ async fn main() {
                 // Only check if player snake is dead
                 if snake.is_dead() {
                     level_tracker.in_game = false;
-                    game_music_playing = false;
                     
-                    // Mute game music and restore title music
+                    // Stop game music completely
                     if let Some(music) = &game_music {
-                        set_sound_volume(music, 0.0);  // Mute game music
+                        stop_sound(music);
                     }
-                    if let Some(music) = &title_music {
-                        set_sound_volume(music, 0.7);  // Restore title music volume
-                    }
+                    game_music_playing = false;
                 }
 
                 if snake.head() == food.position {
