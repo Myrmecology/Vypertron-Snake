@@ -9,15 +9,3 @@ Cargo.lock
 # OS
 .DS_Store
 Thumbs.db
-
-# Macroquad Assets
-/assets/*.ogg
-/assets/*.wav
-/assets/*.mp3
-/target
-**/*.rs.bk
-Cargo.lock
-.vscode/
-.DS_Store
-Thumbs.db
-
