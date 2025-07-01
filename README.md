@@ -113,3 +113,7 @@ Special thanks to the Rust community
 
 
 Enjoy playing Vypertron Snake! 🐍🎮
+
+You can see this project in action at my YouTube channel https://www.youtube.com/watch?v=RWg3_3ZnAQw&t=2s
+
+Happy coding
