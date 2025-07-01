@@ -9,6 +9,8 @@ pub struct CpuSnake {
     pub dir: Direction,
     pub move_timer: f32,
     pub move_delay: f32,
+    pub color_head: Color,
+    pub color_body: Color,
 }
 
 impl CpuSnake {
@@ -22,6 +24,23 @@ impl CpuSnake {
             dir: Direction::Left,
             move_timer: 0.0,
             move_delay: 0.25,
+            color_head: RED,
+            color_body: DARKGRAY,
+        }
+    }
+
+    pub fn new_with_colors(head_color: Color, body_color: Color) -> Self {
+        let mut rng = thread_rng();
+        let x = rng.gen_range(0..GRID_WIDTH);
+        let y = rng.gen_range(0..GRID_HEIGHT);
+
+        Self {
+            body: vec![Segment { x, y }],
+            dir: Direction::Left,
+            move_timer: 0.0,
+            move_delay: 0.25,
+            color_head: head_color,
+            color_body: body_color,
         }
     }
 
@@ -67,7 +86,7 @@ impl CpuSnake {
         let offset = get_offset();
 
         for (i, segment) in self.body.iter().enumerate() {
-            let color = if i == 0 { RED } else { DARKGRAY };
+            let color = if i == 0 { self.color_head } else { self.color_body };
 
             draw_rectangle(
                 offset.x + segment.x as f32 * CELL_SIZE,
@@ -82,6 +101,78 @@ impl CpuSnake {
     pub fn check_collision(&self, snake: &Snake) -> bool {
         let cpu_head = self.body[0];
         snake.body.contains(&cpu_head)
+    }
+}
+
+// New manager struct to handle multiple CPU snakes
+pub struct CpuSnakeManager {
+    pub snakes: Vec<CpuSnake>,
+    current_level: usize,
+}
+
+impl CpuSnakeManager {
+    pub fn new() -> Self {
+        Self {
+            snakes: vec![CpuSnake::new()],
+            current_level: 1,
+        }
+    }
+
+    pub fn update(&mut self, level: usize) {
+        // Check if we need to add more snakes
+        if level != self.current_level {
+            self.current_level = level;
+            self.adjust_snake_count(level);
+        }
+
+        // Update all snakes
+        for snake in &mut self.snakes {
+            snake.update(level);
+        }
+    }
+
+    fn adjust_snake_count(&mut self, level: usize) {
+        // Calculate how many snakes we should have
+        let target_count = self.calculate_snake_count(level);
+        
+        // Add snakes if needed
+        while self.snakes.len() < target_count {
+            let snake = match self.snakes.len() {
+                1 => CpuSnake::new_with_colors(ORANGE, Color::new(0.5, 0.3, 0.0, 1.0)),
+                2 => CpuSnake::new_with_colors(PURPLE, DARKPURPLE),
+                3 => CpuSnake::new_with_colors(BLUE, DARKBLUE),
+                4 => CpuSnake::new_with_colors(YELLOW, GOLD),
+                _ => CpuSnake::new_with_colors(PINK, MAGENTA),
+            };
+            self.snakes.push(snake);
+        }
+
+        // Remove snakes if needed (when level decreases, though this won't happen in normal play)
+        while self.snakes.len() > target_count && self.snakes.len() > 1 {
+            self.snakes.pop();
+        }
+    }
+
+    fn calculate_snake_count(&self, level: usize) -> usize {
+        match level {
+            1..=4 => 1,
+            5..=9 => 2,
+            10..=14 => 3,
+            15..=19 => 4,
+            _ => 5, // Cap at 5 CPU snakes for playability
+        }
+    }
+
+    pub fn draw(&self) {
+        for snake in &self.snakes {
+            snake.draw();
+        }
+    }
+
+    pub fn reset(&mut self) {
+        self.snakes.clear();
+        self.snakes.push(CpuSnake::new());
+        self.current_level = 1;
     }
 }
 

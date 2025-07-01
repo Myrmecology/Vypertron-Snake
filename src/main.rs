@@ -2,7 +2,7 @@ use macroquad::prelude::*;
 use grid::draw_grid;
 use snake::Snake;
 use food::Food;
-use cpu_snake::CpuSnake;
+use cpu_snake::CpuSnakeManager;
 use effects::draw_moving_snakes;
 use level::LevelTracker;
 use themes::get_theme;
@@ -18,7 +18,7 @@ mod themes;
 #[macroquad::main("Vypertron-Snake")]
 async fn main() {
     let mut snake = Snake::new();
-    let mut cpu_snake = CpuSnake::new();
+    let mut cpu_snake_manager = CpuSnakeManager::new();
     let mut food = Food::new(&snake);
     let mut level_tracker = LevelTracker::new();
     let mut score = 0;
@@ -79,7 +79,7 @@ async fn main() {
 
                 if is_key_pressed(KeyCode::Space) {
                     snake = Snake::new();
-                    cpu_snake = CpuSnake::new();
+                    cpu_snake_manager = CpuSnakeManager::new();
                     food = Food::new(&snake);
                     level_tracker.reset();
                     level_tracker.in_game = true;
@@ -116,9 +116,9 @@ async fn main() {
 
                 let delta_time = get_frame_time();
                 snake.update(delta_time);
-                cpu_snake.update(level_tracker.level);
+                cpu_snake_manager.update(level_tracker.level);
 
-                // Only check if player snake is dead (removed CPU collision check)
+                // Only check if player snake is dead
                 if snake.is_dead() {
                     level_tracker.in_game = false;
                 }
@@ -131,13 +131,13 @@ async fn main() {
                     // Only advance level every 5 foods
                     if score % 5 == 0 {
                         level_tracker.next_level();
-                        cpu_snake = CpuSnake::new();
+                        // No need to reset CPU snakes - the manager handles this automatically!
                     }
                 }
 
                 snake.draw(&theme);
                 food.draw(&theme);
-                cpu_snake.draw();
+                cpu_snake_manager.draw();
             }
         }
 
