@@ -1,4 +1,5 @@
 use macroquad::prelude::*;
+use macroquad::audio::{load_sound, play_sound, set_sound_volume, PlaySoundParams};
 use grid::draw_grid;
 use snake::Snake;
 use food::Food;
@@ -32,9 +33,51 @@ async fn main() {
         }
     };
 
+    // Load music files
+    let title_music = match load_sound("assets/Snake_title.wav").await {
+        Ok(sound) => {
+            println!("Title music loaded successfully!");
+            Some(sound)
+        },
+        Err(e) => {
+            println!("Warning: Could not load title music: {:?}", e);
+            None
+        }
+    };
+
+    let game_music = match load_sound("assets/snake_game.wav").await {
+        Ok(sound) => {
+            println!("Game music loaded successfully!");
+            Some(sound)
+        },
+        Err(e) => {
+            println!("Warning: Could not load game music: {:?}", e);
+            None
+        }
+    };
+
+    // Start playing title music
+    let mut title_music_playing = false;
+    let mut game_music_playing = false;
+
     loop {
         match level_tracker.in_game {
             false => {
+                // Start title music if not already playing
+                if !title_music_playing && !game_music_playing {
+                    if let Some(music) = &title_music {
+                        println!("Playing title music...");
+                        play_sound(
+                            music,
+                            PlaySoundParams {
+                                looped: true,
+                                volume: 0.7,  // Adjust volume as needed
+                            },
+                        );
+                        title_music_playing = true;
+                    }
+                }
+
                 clear_background(BLACK);
                 
                 // Draw animated background effects
@@ -67,7 +110,7 @@ async fn main() {
                     let img_width = texture.width() * img_scale;
                     let img_height = texture.height() * img_scale;
                     let img_x = (screen_width() - img_width) / 2.0;
-                    let img_y = title_y + 30.0;
+                    let img_y = title_y + 50.0;
                     
                     // Add a subtle pulsing effect to the image
                     let img_pulse = ((get_time() * 2.0).sin() * 0.05 + 1.0) as f32;
@@ -115,6 +158,24 @@ async fn main() {
                     level_tracker.reset();
                     level_tracker.in_game = true;
                     score = 0;
+                    
+                    // Mute title music and start game music
+                    if let Some(music) = &title_music {
+                        set_sound_volume(music, 0.0);  // Mute title music
+                    }
+                    title_music_playing = false;
+                    
+                    if let Some(music) = &game_music {
+                        println!("Playing game music...");
+                        play_sound(
+                            music,
+                            PlaySoundParams {
+                                looped: true,
+                                volume: 0.7,  // Adjust volume as needed
+                            },
+                        );
+                        game_music_playing = true;
+                    }
                 }
             }
             true => {
@@ -152,6 +213,15 @@ async fn main() {
                 // Only check if player snake is dead
                 if snake.is_dead() {
                     level_tracker.in_game = false;
+                    game_music_playing = false;
+                    
+                    // Mute game music and restore title music
+                    if let Some(music) = &game_music {
+                        set_sound_volume(music, 0.0);  // Mute game music
+                    }
+                    if let Some(music) = &title_music {
+                        set_sound_volume(music, 0.7);  // Restore title music volume
+                    }
                 }
 
                 if snake.head() == food.position {
