@@ -23,6 +23,15 @@ async fn main() {
     let mut level_tracker = LevelTracker::new();
     let mut score = 0;
 
+    // Load the snake head texture
+    let snake_head_texture = match load_texture("assets/snake_head.png").await {
+        Ok(texture) => Some(texture),
+        Err(_) => {
+            println!("Warning: Could not load snake head image. Game will continue without it.");
+            None
+        }
+    };
+
     loop {
         match level_tracker.in_game {
             false => {
@@ -36,7 +45,7 @@ async fn main() {
                 let title_size = 80.0;
                 let title_width = measure_text(title, None, title_size as u16, 1.0).width;
                 let title_x = (screen_width() - title_width) / 2.0;
-                let title_y = screen_height() / 2.0 - 100.0;
+                let title_y = screen_height() / 2.0 - 200.0; // Moved up to make room for image
                 
                 // Draw title with glow effect
                 for i in 0..3 {
@@ -52,12 +61,34 @@ async fn main() {
                 }
                 draw_text(title, title_x, title_y, title_size, GREEN);
                 
+                // Draw snake head image centered under the title (if loaded)
+                if let Some(texture) = &snake_head_texture {
+                    let img_scale = 0.4; // Adjust this to make the image bigger or smaller
+                    let img_width = texture.width() * img_scale;
+                    let img_height = texture.height() * img_scale;
+                    let img_x = (screen_width() - img_width) / 2.0;
+                    let img_y = title_y + 30.0;
+                    
+                    // Add a subtle pulsing effect to the image
+                    let img_pulse = ((get_time() * 2.0).sin() * 0.05 + 1.0) as f32;
+                    draw_texture_ex(
+                        texture,
+                        img_x,
+                        img_y,
+                        WHITE,
+                        DrawTextureParams {
+                            dest_size: Some(vec2(img_width * img_pulse, img_height * img_pulse)),
+                            ..Default::default()
+                        }
+                    );
+                }
+                
                 // Draw start prompt (also centered)
                 let prompt = "Press SPACE to start";
                 let prompt_size = 32.0;
                 let prompt_width = measure_text(prompt, None, prompt_size as u16, 1.0).width;
                 let prompt_x = (screen_width() - prompt_width) / 2.0;
-                let prompt_y = title_y + 80.0;
+                let prompt_y = title_y + 450.0; // Moved further down to clear the snake image
                 
                 // Pulsing effect for prompt
                 let pulse = (get_time() * 4.0).sin() * 0.3 + 0.7;
@@ -144,7 +175,6 @@ async fn main() {
         next_frame().await;
     }
 }
-
 
 
 
